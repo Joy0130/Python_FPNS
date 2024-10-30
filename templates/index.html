@@ -156,6 +156,15 @@
             fileInput.files = event.dataTransfer.files;
             fileNameZone.textContent = file?.name || '未選擇任何檔案';
         }
+        function checkFileSelected() {
+        const fileInput = document.querySelector('.file-upload-input');
+        
+        if (fileInput.files.length === 0) {
+            alert('沒有選擇檔案！請先選擇一個檔案再上傳。');
+            return false; // 阻止表單送出
+        }
+        return true; // 檔案已選擇，允許送出
+    }
         
     </script>
 
