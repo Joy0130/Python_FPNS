@@ -120,11 +120,22 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .loading-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        justify-content: center;
+        align-items: center;
+    }
 
       </style>
 </head>
 <body>
-    <form action="/upload" method="post" enctype="multipart/form-data">
+    <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="validateFile();showLoading();">
         <div class="container">
             <input class="file-upload-input" name="file" type="file" accept=".xlsx, .xls">
             <div class="file-upload-zone" onclick="document.querySelector('.file-upload-input').click();" ondrop="dropHandler(event);" ondragover="event.preventDefault();">
@@ -134,21 +145,27 @@
             </div>
             <div class="file-upload">
                 <button type="submit">發送推播</button>
+                
             </div>
         </div>
     </form>
+    
+    <!-- Loading 畫面 -->
+    <div id="loading" style="display: none;" class="loading-container">
+        <img class="loading-img" src="{{ url_for('static', filename='images/loading1.gif') }}" alt="發送中...請稍後" />
+    </div>
 
     <script>
-
+    
         const fileInput = document.querySelector(".file-upload-input");
         const fileNameZone = document.querySelector(".file-upload__name");
-
+    
         // 顯示上傳檔案名稱
         fileInput.addEventListener("change", function (e) {
             const fileName = e.target.files[0]?.name || '未選擇任何檔案';
             fileNameZone.textContent = fileName;
         });
-
+    
         // 拖曳檔案
         function dropHandler(event) {
             event.preventDefault();
@@ -156,18 +173,41 @@
             fileInput.files = event.dataTransfer.files;
             fileNameZone.textContent = file?.name || '未選擇任何檔案';
         }
-        function checkFileSelected() {
-        const fileInput = document.querySelector('.file-upload-input');
-        
-        if (fileInput.files.length === 0) {
-            alert('沒有選擇檔案！請先選擇一個檔案再上傳。');
-            return false; // 阻止表單送出
+    
+        // 顯示 Loading 畫面
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
         }
-        return true; // 檔案已選擇，允許送出
-    }
-        
-    </script>
 
+        function validateFile() {
+            // 獲取檔案輸入和檔案名稱顯示元素
+            const fileInput = document.querySelector('.file-upload-input');
+            const fileNameDisplay = document.querySelector('.file-upload__name');
+
+            // 檢查是否有選擇檔案
+            if (fileInput.files.length === 0) {
+                // alert("請上傳檔案");
+                window.location.href = 'index.html';
+                return false; // 阻止表單提交
+            }
+            
+            // 根據結果清空檔案輸入
+            else if (response.ok) {
+                    alert(result.message); // 顯示成功訊息
+                    fileInput.value = ''; // 清空檔案輸入
+                    window.location.href = 'index.html';
+                } 
+            else 
+            {
+                alert(result.error); // 顯示錯誤訊息
+            }
+                    
+            
+        }
+
+                
+    </script>
+    
 
 </body>
 </html>
