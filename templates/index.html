@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上傳檔案</title>
+
+    <style>
+        .file-upload-input {
+            display: none;
+        }
+
+        .file-upload-zone	{
+            margin: 150px auto;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 10px;
+            width: 400px;
+            height: 300px;
+            background-color: #fdfdfd;
+            border-radius: 5px;
+            /* border: 1px gray; */
+            /* text-transform: capitalize; */
+            box-shadow: 1px 1px 10px gray;
+            cursor: pointer;
+        }
+
+        .file-upload__btn {
+            flex-grow: 1;
+            border:none;
+            padding:3px 7px;
+            color: white;
+            font-weight: bold;
+            width: 100px;
+            height: 3px;
+            text-align: center;
+            /* margin: auto; */
+            background-color: #22aaf8;
+            border-radius: 3px; 
+            text-decoration: none;
+            /* border: 1px solid gray; */
+        }
+        .cancel_file-upload__btn {
+            flex-grow: 1;
+            border:none;
+            padding:2px 2px -15px;
+            color: black;
+            width: 100px;
+            height: 10px;
+            text-align: center;
+            border-radius: 3px; 
+            text-decoration: none;
+            margin-left: auto;
+        }
+        
+        .file-upload__btn:hover {
+            background: #2575fc; 
+            transform: scale(1.05); /* 懸停微縮放效果 */
+            box-shadow: 1px 1px 10px gray;
+        }
+
+        .file-upload__btn:active {
+            transform: scale(0.98); /* 點擊縮小效果 */
+        }
+
+        .file-upload__name {
+        /* 	flex-grow: 2; */
+            font-size: 14px;
+            color: rgb(0, 0, 0);
+            font-weight: bold;
+        }
+        .file-upload	{
+            margin: 120px auto;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+        }
+        .file-upload button {
+            height: 80px;
+            border: none;
+            border-radius: 5px;
+            background: #22aaf8; 
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s; 
+        }
+
+        .file-upload button:hover {
+            background: #2575fc;
+            transform: scale(1.05); 
+        }
+
+        .file-upload button:active {
+            transform: scale(0.98); 
+        }
+
+        .file-upload__text-container {
+            flex-grow: 6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-upload__name{
+            font-size: 14px;
+            margin-top: 10px; 
+        }
+        .image{
+            width: 100px;
+            height: 100px;
+            margin: 90px auto;
+            display: flex;
+            flex-direction: column;
+            padding: auto;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+      </style>
+</head>
+<body>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <div class="container">
+            <input class="file-upload-input" name="file" type="file" accept=".xlsx, .xls">
+            <div class="file-upload-zone" onclick="document.querySelector('.file-upload-input').click();" ondrop="dropHandler(event);" ondragover="event.preventDefault();">
+                <span>將檔案拖曳到此或點擊圖示上傳</span>
+                <span class="file-upload__name">未選擇任何檔案</span>
+                <img class="image" src="{{ url_for('static', filename='images/file.svg') }}" alt="image" />
+            </div>
+            <div class="file-upload">
+                <button type="submit">發送推播</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+
+        const fileInput = document.querySelector(".file-upload-input");
+        const fileNameZone = document.querySelector(".file-upload__name");
+
+        // 顯示上傳檔案名稱
+        fileInput.addEventListener("change", function (e) {
+            const fileName = e.target.files[0]?.name || '未選擇任何檔案';
+            fileNameZone.textContent = fileName;
+        });
+
+        // 拖曳檔案
+        function dropHandler(event) {
+            event.preventDefault();
+            const file = event.dataTransfer.files[0];
+            fileInput.files = event.dataTransfer.files;
+            fileNameZone.textContent = file?.name || '未選擇任何檔案';
+        }
+        
+    </script>
+
+
+</body>
+</html>
