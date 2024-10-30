@@ -62,7 +62,7 @@ def upload_file():
                             "recipients": [employee_id]
                         }
 
-                        response = requests.post(PUSH_API_URL, json=data, headers=HEADERS)
+                        # response = requests.post(PUSH_API_URL, json=data, headers=HEADERS)
 
                         responses.append({
                             "employee_id": employee_id,

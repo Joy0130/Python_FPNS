@@ -178,34 +178,7 @@
         function showLoading() {
             document.getElementById('loading').style.display = 'flex';
         }
-
-        function validateFile() {
-            // 獲取檔案輸入和檔案名稱顯示元素
-            const fileInput = document.querySelector('.file-upload-input');
-            const fileNameDisplay = document.querySelector('.file-upload__name');
-
-            // 檢查是否有選擇檔案
-            if (fileInput.files.length === 0) {
-                // alert("請上傳檔案");
-                window.location.href = 'index.html';
-                return false; // 阻止表單提交
-            }
-            
-            // 根據結果清空檔案輸入
-            else if (response.ok) {
-                    alert(result.message); // 顯示成功訊息
-                    fileInput.value = ''; // 清空檔案輸入
-                    window.location.href = 'index.html';
-                } 
-            else 
-            {
-                alert(result.error); // 顯示錯誤訊息
-            }
-                    
-            
-        }
-
-                
+               
     </script>
     
 
