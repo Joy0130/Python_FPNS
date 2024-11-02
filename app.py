@@ -7,14 +7,28 @@ import os
 app = Flask(__name__)
 
 # config檔案設定
-with open("config.json") as config_file:
-    config = json.load(config_file)
-    API_URL = config["PUSH_API_URL"]
-    API_KEY = config["push-api-key"]
-    if not API_URL or not API_KEY:
-        raise ValueError("API URL or API Key is missing in config.json")
+# with open("config.json") as config_file:
+#     config = json.load(config_file)
+#     API_URL = config["PUSH_API_URL"]
+#     API_KEY = config["push-api-key"]
+#     if not API_URL or not API_KEY:
+#         raise ValueError("API URL or API Key is missing in config.json")
 
-PUSH_API_URL = API_URL
+# PUSH_API_URL = API_URL
+# HEADERS = {
+#     "push-api-key": API_KEY,
+#     "Content-Type": "application/json"
+# }
+
+# 讀取環境變數
+API_URL = os.getenv("PUSH_API_URL")
+API_KEY = os.getenv("push-api-key")
+
+# 驗證環境變數是否存在
+if not API_URL or not API_KEY:
+    raise ValueError("沒有設定環境變數")
+
+# 設置HEADERS
 HEADERS = {
     "push-api-key": API_KEY,
     "Content-Type": "application/json"
@@ -58,7 +72,7 @@ def upload_file():
                         # 推播訊息
                         data = { 
                             "title": file_title,
-                            "body": f"教育補助費已入帳，您的教育補助費合計金額為 {amount} 元。",
+                            "body": f"教育補助費已入帳，您的教育補助費總金額為 {amount} 元。",
                             "type": "text",
                             "projects": ["Portal-APP"],
                             "platforms": ["iOS", "Android"],
@@ -67,7 +81,7 @@ def upload_file():
                         }
                         
                         # 送出API推播
-                        response = requests.post(PUSH_API_URL, json=data, headers=HEADERS)
+                        response = requests.post(API_URL, json=data, headers=HEADERS)
                         responses.append({
                             "employee_id": employee_id,
                             "status_code": response.status_code, 
@@ -77,7 +91,7 @@ def upload_file():
                         
                         print("Payload being sent:", data)
                         print("Response status code:", response.status_code)
-                        print("Response content:", response.content)
+                        #print("Response content:", response.content)
 
                 return jsonify({"message": "成功送出", "response": responses}), 200
             
