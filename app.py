@@ -1,20 +1,44 @@
 from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
 import pandas as pd
 import requests
-import json
 import os
+
+
+
+# config檔案設定
+# with open("config.json") as config_file:
+#     config = json.load(config_file)
+#     API_URL = config["PUSH_API_URL"]
+#     API_KEY = config["push-api-key"]
+#     if not API_URL or not API_KEY:
+#         raise ValueError("API URL or API Key is missing in config.json")
+
+# PUSH_API_URL = API_URL
+# HEADERS = {
+#     "push-api-key": API_KEY,
+#     "Content-Type": "application/json"
+# }
 
 app = Flask(__name__)
 
-# config檔案設定
-with open("config.json") as config_file:
-    config = json.load(config_file)
-    API_URL = config["PUSH_API_URL"]
-    API_KEY = config["push-api-key"]
-    if not API_URL or not API_KEY:
-        raise ValueError("API URL or API Key is missing in config.json")
+# .env 文件的路徑
+dotenv_path = os.path.join(os.getcwd(), '.env')
 
-PUSH_API_URL = API_URL
+# 載入 .env 文件
+load_dotenv(dotenv_path=dotenv_path)
+
+print("Loaded .env file :", os.path.abspath(dotenv_path))
+
+# 讀取環境變數
+API_URL = os.getenv("PUSH_API_URL")
+API_KEY = os.getenv("PUSH_API_KEY")
+
+# 驗證環境變數是否存在
+if not API_URL or not API_KEY:
+    raise ValueError("沒有設定環境變數")
+
+# 設置HEADERS
 HEADERS = {
     "push-api-key": API_KEY,
     "Content-Type": "application/json"
@@ -58,7 +82,7 @@ def upload_file():
                         # 推播訊息
                         data = { 
                             "title": file_title,
-                            "body": f"教育補助費已入帳，您的教育補助費合計金額為 {amount} 元。",
+                            "body": f"教育補助費已入帳，您的教育補助費總金額為 {amount} 元。",
                             "type": "text",
                             "projects": ["Portal-APP"],
                             "platforms": ["iOS", "Android"],
@@ -67,7 +91,7 @@ def upload_file():
                         }
                         
                         # 送出API推播
-                        response = requests.post(PUSH_API_URL, json=data, headers=HEADERS)
+                        response = requests.post(API_URL, json=data, headers=HEADERS)
                         responses.append({
                             "employee_id": employee_id,
                             "status_code": response.status_code, 
@@ -77,7 +101,7 @@ def upload_file():
                         
                         print("Payload being sent:", data)
                         print("Response status code:", response.status_code)
-                        print("Response content:", response.content)
+                        #print("Response content:", response.content)
 
                 return jsonify({"message": "成功送出", "response": responses}), 200
             
