@@ -22,6 +22,7 @@ import os
 
 app = Flask(__name__)
 
+<<<<<<< HEAD
 # .env 文件的路徑
 dotenv_path = os.path.join(os.getcwd(), '.env')
 
@@ -33,6 +34,25 @@ print("Loaded .env file :", os.path.abspath(dotenv_path))
 # 讀取環境變數
 API_URL = os.getenv("PUSH_API_URL")
 API_KEY = os.getenv("PUSH_API_KEY")
+=======
+# config檔案設定
+# with open("config.json") as config_file:
+#     config = json.load(config_file)
+#     API_URL = config["PUSH_API_URL"]
+#     API_KEY = config["push-api-key"]
+#     if not API_URL or not API_KEY:
+#         raise ValueError("API URL or API Key is missing in config.json")
+
+# PUSH_API_URL = API_URL
+# HEADERS = {
+#     "push-api-key": API_KEY,
+#     "Content-Type": "application/json"
+# }
+
+# 讀取環境變數
+API_URL = os.getenv("PUSH_API_URL")
+API_KEY = os.getenv("push-api-key")
+>>>>>>> origin/main
 
 # 驗證環境變數是否存在
 if not API_URL or not API_KEY:

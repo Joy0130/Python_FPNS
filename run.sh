@@ -6,6 +6,7 @@ pip3 install pandas
 pip3 install requests
 pip3 install virtualenv
 pip3 install openpyxl
+<<<<<<< HEAD
 pip3 install load-dotenv
 pip3 install pdm-dotenv
 # 使用 source 加載 .env 文件中的變數
@@ -13,3 +14,6 @@ if [ -f .env ]; then
   source .env
 fi
 python3 app.py
+=======
+python3 app.py
+>>>>>>> origin/main
