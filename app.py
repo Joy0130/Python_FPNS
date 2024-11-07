@@ -49,6 +49,7 @@ def index():
 # 上傳excel檔案
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    print(request.form)
     if 'file' not in request.files:
         return jsonify({"error": "無此檔案"}), 400
 
@@ -56,6 +57,11 @@ def upload_file():
     
     if file.filename == '':
         return jsonify({"error": "沒有選擇檔案"}), 400
+    
+# 檢查是否選擇了推播類型
+    notification_type = request.form.get("notification_type")
+    if not notification_type:  # 如果推播類型為空
+        return jsonify({"error": "請選擇推播類型"}), 400
     
     if file and file.filename.endswith(('.xlsx', '.xls')):
         try:
@@ -75,11 +81,21 @@ def upload_file():
                     for _, row in df.iterrows():
                         employee_id = row['員工編號']
                         amount = row['合計補助金額']
+                        etext = "教育補助費已入帳，您的教育補助費總金額為"
+                        btext = "福利金已發放，您的福利金總金額為"
+
+                        #根據推播類型來設定推播內文
+                        if notification_type == "btext":
+                            body_text = btext
+                        elif notification_type == "etext":
+                            body_text = etext
+                        else:
+                            return jsonify({"error": "無效的推播類型"}), 400  # 檢查無效值
 
                         # 推播訊息
                         data = { 
                             "title": file_title,
-                            "body": f"教育補助費已入帳，您的教育補助費總金額為 {amount} 元。",
+                            "body": f"{body_text} {amount} 元。",
                             "type": "text",
                             "projects": ["Portal-APP"],
                             "platforms": ["iOS", "Android"],
