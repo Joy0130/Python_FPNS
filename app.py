@@ -32,7 +32,6 @@ print("Loaded .env file :", os.path.abspath(dotenv_path))
 API_URL = os.getenv("PUSH_API_URL")
 API_KEY = os.getenv("PUSH_API_KEY")
 print("API_URL:", os.getenv("PUSH_API_URL"))
-print("API_KEY:", os.getenv("PUSH_API_KEY"))
 
 # 驗證環境變數是否存在
 if not API_URL or not API_KEY:
@@ -96,7 +95,7 @@ def upload_file():
                     elif '禮金' in df.columns:
                         message_type = 'ftext'
                         amount_column = '禮金'
-                        body_text = "春節獎金已發放，您的春節獎金總金額為，請至薪資帳戶查看"
+                        body_text = "福委會春節禮金已發放，請至薪資帳戶查看，總金額為"
                     else:
                         continue  # 無符合條件的金額欄位，跳過此工作表
 

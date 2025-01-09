@@ -18,7 +18,7 @@ def _get_shebang_path(executable: str, is_launcher: bool) -> bytes:
     and installer use a clever hack to make the shebang after ``/bin/sh``,
     where the interpreter path is quoted.
     """
-    if is_launcher or " " not in executable and (len(executable) + 3) <= 127:
+    if is_launcher or (" " not in executable and (len(executable) + 3) <= 127):
         return executable.encode("utf-8")
     return shlex.quote(executable).encode("utf-8")
 
@@ -42,7 +42,7 @@ def _is_console_script(content: bytes) -> bool:
 
 
 def _replace_shebang(path: Path, new_executable: bytes) -> None:
-    """Replace the python executable from the shebeng line, which can be in two forms:
+    """Replace the python executable from the shebang line, which can be in two forms:
 
     1. #!python_executable
     2. #!/bin/sh
