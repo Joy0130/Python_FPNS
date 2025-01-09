@@ -28,8 +28,11 @@ load_dotenv(dotenv_path=dotenv_path)
 print("Loaded .env file :", os.path.abspath(dotenv_path))
 
 # 讀取環境變數
+# API_URL = os.getenv("PUSH_API_URL")
 API_URL = os.getenv("PUSH_API_URL")
 API_KEY = os.getenv("PUSH_API_KEY")
+print("API_URL:", os.getenv("PUSH_API_URL"))
+print("API_KEY:", os.getenv("PUSH_API_KEY"))
 
 # 驗證環境變數是否存在
 if not API_URL or not API_KEY:
@@ -76,47 +79,70 @@ def upload_file():
             for sheet_name, df in excel_data.items():
                 if '員工編號' in df.columns and '合計補助金額' in df.columns:
                     df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
+                elif '員工編號' in df.columns and '合計福利金額' in df.columns:
+                    df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
+                else:
+                    df['員工編號'] = df['員工編號'].apply(lambda x: str(int(x)).zfill(6) if pd.notna(x) and str(x).strip() else '')# 去掉小數點補 0 至 6 碼
+                
+                # 判斷是否有對應的金額欄位
+                    if '合計補助金額' in df.columns:
+                        message_type = 'etext'
+                        amount_column = '合計補助金額'
+                        body_text = "教育補助費已入帳，您的教育補助費總金額為"
+                    elif '合計福利金額' in df.columns:
+                        message_type = 'btext'
+                        amount_column = '合計福利金額'
+                        body_text = "福利金已發放，您的福利金總金額為"
+                    elif '禮金' in df.columns:
+                        message_type = 'ftext'
+                        amount_column = '禮金'
+                        body_text = "春節獎金已發放，您的春節獎金總金額為，請至薪資帳戶查看"
+                    else:
+                        continue  # 無符合條件的金額欄位，跳過此工作表
 
-                    # 抓取對應員工編號與補助金額
+                    # 依列進行推播
                     for _, row in df.iterrows():
                         employee_id = row['員工編號']
-                        amount = row['合計補助金額']
-                        etext = "教育補助費已入帳，您的教育補助費總金額為"
-                        btext = "福利金已發放，您的福利金總金額為"
 
-                        #根據推播類型來設定推播內文
-                        if notification_type == "btext":
-                            body_text = btext
-                        elif notification_type == "etext":
-                            body_text = etext
-                        else:
-                            return jsonify({"error": "無效的推播類型"}), 400  # 檢查無效值
+                        # 如果員工編號為空，停止處理
+                        if not employee_id.strip():  # 判斷是否為空字串
+                            print(f"遇到空白員工編號，停止處理工作表: {sheet_name}")
+                            break  # 停止處理當前工作表 
 
-                        # 推播訊息
-                        data = { 
+                        amount = row.get(amount_column, 0)   
+                        # 驗證推播類型
+                        if notification_type != message_type:
+                            continue
+
+                        # 組建推播資料
+                        data = {
                             "title": file_title,
                             "body": f"{body_text} {amount} 元。",
                             "type": "text",
                             "projects": ["Portal-APP"],
                             "platforms": ["iOS", "Android"],
                             "inbox": "user",
-                            "recipients": [employee_id]  # 傳送推播使用者ID
+                            "recipients": [employee_id],  # 傳送推播使用者 ID
                         }
-                        
-                        # 送出API推播
-                        response = requests.post(API_URL, json=data, headers=HEADERS)
-                        responses.append({
-                            "employee_id": employee_id,
-                            "status_code": response.status_code, 
-                            # "response": response.json(),
-                            "message": response.json().get("message")
-                        })
-                        
-                        print("Payload being sent:", data)
-                        print("Response status code:", response.status_code)
-                        #print("Response content:", response.content)
 
-                return jsonify({"message": "成功送出", "response": responses}), 200
+                        # 送出 API 推播
+                        try:
+                            response = requests.post(API_URL, json=data, headers=HEADERS)
+                            responses.append({
+                                "employee_id": employee_id,
+                                "status_code": response.status_code,
+                                "response": response.json(),
+                                "message": response.json().get("message"),
+                            })
+                            print("Payload being sent:", data)
+                            print("Response status code:", response.status_code)
+                        except requests.exceptions.RequestException as e:
+                            responses.append({
+                                "employee_id": employee_id,
+                                "error": str(e),
+                            })
+
+            return jsonify({"message": "成功送出", "response": responses}), 200
             
         except Exception as e:
             print("Error during file processing:", e) 
