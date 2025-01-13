@@ -28,10 +28,8 @@ load_dotenv(dotenv_path=dotenv_path)
 print("Loaded .env file :", os.path.abspath(dotenv_path))
 
 # 讀取環境變數
-# API_URL = os.getenv("PUSH_API_URL")
 API_URL = os.getenv("PUSH_API_URL")
 API_KEY = os.getenv("PUSH_API_KEY")
-print("API_URL:", os.getenv("PUSH_API_URL"))
 
 # 驗證環境變數是否存在
 if not API_URL or not API_KEY:
@@ -59,93 +57,94 @@ def upload_file():
     
     if file.filename == '':
         return jsonify({"error": "沒有選擇檔案"}), 400
-    
-# 檢查是否選擇了推播類型
+
+    # 檢查是否選擇了推播類型
     notification_type = request.form.get("notification_type")
     if not notification_type:  # 如果推播類型為空
         return jsonify({"error": "請選擇推播類型"}), 400
-    
+
     if file and file.filename.endswith(('.xlsx', '.xls')):
         try:
             # 指讀取上傳的excel檔案 不儲存
             excel_data = pd.read_excel(file, sheet_name=None)
-            responses = []  #儲存API資訊
+            responses = []  # 儲存API資訊
 
             # 擷取檔名
             file_title = os.path.splitext(file.filename)[0]
 
-            # 抓取excel中的工作表中的員工編號及合計補助金額欄位
+            # 抓取 Excel 中的員工編號及合計補助金額欄位
             for sheet_name, df in excel_data.items():
-                if '員工編號' in df.columns and '合計補助金額' in df.columns:
-                    df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
-                elif '員工編號' in df.columns and '合計福利金額' in df.columns:
-                    df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
-                else:
-                    df['員工編號'] = df['員工編號'].apply(lambda x: str(int(x)).zfill(6) if pd.notna(x) and str(x).strip() else '')# 去掉小數點補 0 至 6 碼
-                
-                # 判斷是否有對應的金額欄位
+                if '員工編號' in df.columns:
                     if '合計補助金額' in df.columns:
-                        message_type = 'etext'
-                        amount_column = '合計補助金額'
-                        body_text = "教育補助費已入帳，您的教育補助費總金額為"
-                    elif '合計福利金額' in df.columns:
-                        message_type = 'btext'
-                        amount_column = '合計福利金額'
-                        body_text = "福利金已發放，您的福利金總金額為"
+                        df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
                     elif '禮金' in df.columns:
-                        message_type = 'ftext'
-                        amount_column = '禮金'
-                        body_text = "福委會春節禮金已發放，請至薪資帳戶查看，總金額為"
+                        df['員工編號'] = df['員工編號'].apply(lambda x: str(int(x)).zfill(6) if pd.notna(x) and str(x).strip() else '')
                     else:
-                        continue  # 無符合條件的金額欄位，跳過此工作表
+                        # 無法處理的情境，跳過此工作表
+                        continue
 
-                    # 依列進行推播
+                    # 抓取對應員工編號與補助金額
                     for _, row in df.iterrows():
                         employee_id = row['員工編號']
+                        amount = row.get('合計補助金額', row.get('禮金', None))
 
-                        # 如果員工編號為空，停止處理
-                        if not employee_id.strip():  # 判斷是否為空字串
-                            print(f"遇到空白員工編號，停止處理工作表: {sheet_name}")
-                            break  # 停止處理當前工作表 
+                        if not employee_id or pd.isna(amount):
+                            continue  # 跳過無效資料
 
-                        amount = row.get(amount_column, 0)   
-                        # 驗證推播類型
-                        if notification_type != message_type:
+                        etext = "教育補助費已入帳，您的教育補助費總金額為"
+                        btext = "福利金已發放，您的福利金總金額為"
+                        ftext = "福委會春節獎金已發放，請至薪資帳戶查看，您的春節獎金總金額為"
+
+                        # 根據推播類型來設定推播內文
+                        if notification_type == "btext":
+                            body_text = btext
+                        elif notification_type == "etext":
+                            body_text = etext
+                        elif notification_type == "ftext":
+                            body_text = ftext
+                        else:
+                            responses.append({
+                                "employee_id": employee_id,
+                                "status_code": 400,
+                                "error": "無效的推播類型"
+                            })
                             continue
 
-                        # 組建推播資料
-                        data = {
+                        # 推播訊息
+                        data = { 
                             "title": file_title,
                             "body": f"{body_text} {amount} 元。",
                             "type": "text",
                             "projects": ["Portal-APP"],
                             "platforms": ["iOS", "Android"],
                             "inbox": "user",
-                            "recipients": [employee_id],  # 傳送推播使用者 ID
+                            "recipients": [employee_id]  # 傳送推播使用者ID
                         }
-
-                        # 送出 API 推播
+                        
                         try:
                             response = requests.post(API_URL, json=data, headers=HEADERS)
                             responses.append({
                                 "employee_id": employee_id,
                                 "status_code": response.status_code,
                                 "response": response.json(),
-                                "message": response.json().get("message"),
-                            })
-                            print("Payload being sent:", data)
-                            print("Response status code:", response.status_code)
-                        except requests.exceptions.RequestException as e:
-                            responses.append({
-                                "employee_id": employee_id,
-                                "error": str(e),
+                                "message": response.json().get("message")
                             })
 
+                            print("Payload being sent:", data)
+                            print("Response status code:", response.status_code)
+                        except Exception as e:
+                            responses.append({
+                                "employee_id": employee_id,
+                                "status_code": 500,
+                                "error": str(e)
+                            })
+
+            # 回傳所有推播結果
             return jsonify({"message": "成功送出", "response": responses}), 200
             
         except Exception as e:
-            print("Error during file processing:", e) 
-            return jsonify({"error": "伺服器錯誤，請稍後再試"}), 500
+                print("Error during file processing:", e) 
+                return jsonify({"error": "伺服器錯誤，請稍後再試"}), 500
     
     return jsonify({"error": "檔案必須為excel檔"}), 400
 
