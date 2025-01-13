@@ -27,7 +27,7 @@ openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
 pbs-installer==2025.1.6
-pdm==2.22.1
+pdm==2.22.2
 pdm-dotenv==0.3.1
 platformdirs==4.3.6
 Pygments==2.19.1
