@@ -1,0 +1,281 @@
+from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import pandas as pd
+import requests
+import os
+import threading
+
+# config檔案設定
+# with open("config.json") as config_file:
+#     config = json.load(config_file)
+#     API_URL = config["PUSH_API_URL"]
+#     API_KEY = config["push-api-key"]
+#     if not API_URL or not API_KEY:
+#         raise ValueError("API URL or API Key is missing in config.json")
+
+# PUSH_API_URL = API_URL
+# HEADERS = {
+#     "push-api-key": API_KEY,
+#     "Content-Type": "application/json"
+# }
+
+app = Flask(__name__)
+
+# .env 文件的路徑
+dotenv_path = os.path.join(os.getcwd(), '.env')
+
+# 載入 .env 文件
+load_dotenv(dotenv_path=dotenv_path)
+print("Loaded .env file :", os.path.abspath(dotenv_path))
+
+# 讀取環境變數
+API_URL = os.getenv("PUSH_API_URL")
+API_KEY = os.getenv("PUSH_API_KEY")
+
+# 驗證環境變數是否存在
+if not API_URL or not API_KEY:
+    raise ValueError("沒有設定環境變數")
+
+# 設置HEADERS
+HEADERS = {
+    "push-api-key": API_KEY,
+    "Content-Type": "application/json"
+}
+
+@app.route("/")
+@app.route('/index')
+def index():
+    return render_template('index.html')  #讀取html檔案
+
+# 發送單一推播通知的函數
+def send_notification(employee_id, amount, body_text, file_title):
+    """
+    發送單一推播通知
+    
+    Args:
+        employee_id: 員工編號
+        amount: 金額
+        body_text: 推播內文文字
+        file_title: 檔案標題
+    
+    Returns:
+        dict: 包含推播結果的字典
+    """
+    try:
+        # 構建 HTML 格式的推播內文
+        html_body = f'''<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>{file_title}</title><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"><style>body {{margin: 0;font-family: Arial, sans-serif;background-color: #f9f9f9;line-height: 1.6;color: #333;}}.content-wrap {{background-color: white;max-width: 800px;margin: 0 auto;padding: 16px;box-shadow: 0 2px 6px rgba(0,0,0,0.1);border-radius: 8px;}}.amount {{color: #008a00;font-weight: bold;}}a {{color:#0066cc;text-decoration:none;}}a:hover {{text-decoration:underline;}}@media (max-width: 600px) {{.content-wrap {{ padding: 12px; }}}}@media (min-width:601px) and (max-width:1024px) {{.content-wrap {{ padding: 20px; }}}}@media (min-width:1025px) {{.content-wrap {{ padding: 32px; }}}}</style></head><body><div class="content-wrap"> {body_text} <strong><span class="amount">{amount} 元</span>。</strong></div></body></html>'''
+        
+        # 推播訊息
+        data = { 
+            "title": file_title,
+            "body": html_body,
+            "type": "text",
+            "bodyType": "html",
+            "projects": ["Portal-APP"],
+            "platforms": ["iOS", "Android"],
+            "inbox": "user",
+            "recipients": [employee_id]
+        }
+        
+        response = requests.post(API_URL, json=data, headers=HEADERS, timeout=10)
+        
+        return {
+            "employee_id": employee_id,
+            "status_code": response.status_code,
+            "response": response.json(),
+            "message": response.json().get("message"),
+            "success": True
+        }
+    except requests.exceptions.Timeout:
+        return {
+            "employee_id": employee_id,
+            "status_code": 408,
+            "error": "請求超時",
+            "success": False
+        }
+    except Exception as e:
+        return {
+            "employee_id": employee_id,
+            "status_code": 500,
+            "error": str(e),
+            "success": False
+        }
+
+# 上傳excel檔案
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    print(request.form)
+    if 'file' not in request.files:
+        return jsonify({"error": "無此檔案"}), 400
+
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({"error": "沒有選擇檔案"}), 400
+
+    # 檢查是否選擇了推播類型
+    notification_type = request.form.get("notification_type")
+    if not notification_type:  # 如果推播類型為空
+        return jsonify({"error": "請選擇推播類型"}), 400
+
+    if file and file.filename.endswith(('.xlsx', '.xls')):
+        try:
+            # 讀取上傳的excel檔案 不儲存
+            excel_data = pd.read_excel(file, sheet_name=None)
+            
+            # 擷取檔名
+            file_title = os.path.splitext(file.filename)[0]
+            
+            # 定義推播內文文字
+            text_mapping = {
+                "btext": "福利金已發放，您的福利金總金額為",
+                "etext": "教育補助費已入帳，您的教育補助費總金額為",
+                "ftext": "福委會春節獎金已發放，請至薪資帳戶查看，您的春節獎金總金額為"
+            }
+            
+            # 驗證推播類型
+            if notification_type not in text_mapping:
+                return jsonify({"error": "無效的推播類型"}), 400
+            
+            body_text = text_mapping[notification_type]
+            
+            # 使用 set 追蹤已處理的員工編號，避免重複推播
+            processed_employees = set()
+            
+            # 收集所有需要發送的推播任務
+            notification_tasks = []
+            
+            # 驗證 Excel 格式
+            has_valid_sheet = False
+            invalid_sheets = []
+            
+            # 抓取 Excel 中的員工編號及合計補助金額欄位
+            for sheet_name, df in excel_data.items():
+                # 檢查是否有員工編號欄位
+                if '員工編號' not in df.columns:
+                    invalid_sheets.append(f"工作表 '{sheet_name}': 缺少「員工編號」欄位")
+                    continue
+                
+                # 檢查是否有金額欄位
+                has_amount_column = False
+                amount_column_name = None
+                
+                if '合計補助金額' in df.columns:
+                    has_amount_column = True
+                    amount_column_name = '合計補助金額'
+                    df['員工編號'] = df['員工編號'].astype(str).str.zfill(6)
+                elif '禮金' in df.columns:
+                    has_amount_column = True
+                    amount_column_name = '禮金'
+                    df['員工編號'] = df['員工編號'].apply(
+                        lambda x: str(int(x)).zfill(6) if pd.notna(x) and str(x).strip() else ''
+                    )
+                
+                if not has_amount_column:
+                    invalid_sheets.append(f"工作表 '{sheet_name}': 缺少金額欄位（需要「合計補助金額」或「禮金」）")
+                    continue
+                
+                # 標記為有效工作表
+                has_valid_sheet = True
+
+                # 抓取對應員工編號與補助金額
+                for _, row in df.iterrows():
+                    employee_id = row['員工編號']
+                    amount = row.get('合計補助金額', row.get('禮金', None))
+
+                    # 跳過無效資料
+                    if not employee_id or pd.isna(amount):
+                        continue
+                    
+                    # 檢查是否已經處理過此員工編號（避免重複）
+                    if employee_id in processed_employees:
+                        print(f"跳過重複的員工編號: {employee_id}")
+                        continue
+                    
+                    # 標記為已處理
+                    processed_employees.add(employee_id)
+                    
+                    # 添加到任務列表
+                    notification_tasks.append({
+                        'employee_id': employee_id,
+                        'amount': amount,
+                        'body_text': body_text,
+                        'file_title': file_title
+                    })\r
+            \r
+            # 檢查是否有有效的 Excel 格式\r
+            if not has_valid_sheet:\r
+                error_msg = \"Excel 格式不正確！\\n\\n\"\r
+                error_msg += \"必要欄位：\\n\"\r
+                error_msg += \"1. 員工編號\\n\"\r
+                error_msg += \"2. 金額欄位（合計補助金額 或 禮金）\\n\\n\"\r
+                \r
+                if invalid_sheets:\r
+                    error_msg += \"問題詳情：\\n\" + \"\\n\".join(invalid_sheets)\r
+                else:\r
+                    error_msg += \"無法找到包含必要欄位的工作表。\"\r
+                \r
+                return jsonify({\"error\": error_msg}), 400\r
+            \r
+            if not notification_tasks:\r
+                return jsonify({\"error\": \"Excel 中沒有有效的資料（所有員工編號或金額欄位都是空的）\"}), 400
+            
+            print(f"準備發送 {len(notification_tasks)} 則推播通知...")
+            
+            # 使用多線程並發發送推播（最多同時發送 10 個請求）
+            responses = []
+            max_workers = 10  # 可以根據 API 伺服器容量調整
+            
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # 提交所有任務
+                future_to_task = {
+                    executor.submit(
+                        send_notification,
+                        task['employee_id'],
+                        task['amount'],
+                        task['body_text'],
+                        task['file_title']
+                    ): task for task in notification_tasks
+                }
+                
+                # 收集結果
+                for future in as_completed(future_to_task):
+                    task = future_to_task[future]
+                    try:
+                        result = future.result()
+                        responses.append(result)
+                        print(f"已發送推播給員工 {result['employee_id']}: 狀態碼 {result.get('status_code', 'N/A')}")
+                    except Exception as e:
+                        responses.append({
+                            "employee_id": task['employee_id'],
+                            "status_code": 500,
+                            "error": f"執行錯誤: {str(e)}",
+                            "success": False
+                        })
+
+            # 統計成功和失敗的數量
+            success_count = sum(1 for r in responses if r.get('success', False))
+            fail_count = len(responses) - success_count
+            
+            print(f"推播完成: 成功 {success_count} 則, 失敗 {fail_count} 則")
+            
+            # 回傳所有推播結果
+            return jsonify({
+                "message": "推播處理完成",
+                "summary": {
+                    "total": len(responses),
+                    "success": success_count,
+                    "failed": fail_count
+                },
+                "responses": responses
+            }), 200
+            
+        except Exception as e:
+            print("Error during file processing:", e)
+            return jsonify({"error": f"伺服器錯誤: {str(e)}"}), 500
+    
+    return jsonify({"error": "檔案必須為excel檔"}), 400
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0',debug=True,port=5001)

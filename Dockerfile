@@ -1,9 +1,28 @@
 FROM python:3.12.3-alpine
+
+# 安裝 uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# 設置工作目錄
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-# 開放 Flask 預設埠 5000
-EXPOSE 5000
-COPY . /app
+
+# 複製專案配置文件
+COPY pyproject.toml ./
+
+# 複製應用程式碼和模板
+COPY app.py ./
+COPY templates ./templates
+COPY static ./static
+
+# 設置環境變數
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+
+# 同步依賴（會自動創建虛擬環境）
+RUN uv sync --no-install-project --frozen
+
+# 開放 Flask 預設埠 5001
+EXPOSE 5001
+
 # 啟動 Flask 應用
-CMD ["python", "app.py"]
+CMD ["uv", "run", "python", "app.py"]
