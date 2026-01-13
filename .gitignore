@@ -3,7 +3,6 @@ config.json
 
 # uv
 .venv/
-uv.lock
 .python-version
 
 # Python
