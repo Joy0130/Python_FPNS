@@ -1,0 +1,192 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2026-01-13T14:45:04.979202",
+    "notification_type": "ftext",
+    "filename": "測試115禮金推播測試0113.xlsx",
+    "summary": {
+      "total": 9,
+      "success": 9,
+      "failed": 0
+    },
+    "details": [
+      {
+        "employee_id": "000063",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000120",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000107",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000240",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003751",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000133",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003523",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000210",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003161",
+        "status_code": 201,
+        "success": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "timestamp": "2026-01-13T14:47:29.992698",
+    "notification_type": "ftext",
+    "filename": "測試115禮金推播測試0113.xlsx",
+    "summary": {
+      "total": 9,
+      "success": 9,
+      "failed": 0
+    },
+    "details": [
+      {
+        "employee_id": "000240",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000120",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003523",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003751",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000107",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000210",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000133",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000063",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003161",
+        "status_code": 201,
+        "success": true
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "timestamp": "2026-01-13T15:03:07.569675",
+    "notification_type": "ftext",
+    "filename": "測試115禮金推播測試0113-2.xlsx",
+    "summary": {
+      "total": 12,
+      "success": 11,
+      "failed": 1
+    },
+    "details": [
+      {
+        "employee_id": "000063",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000133",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000107",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000120",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003523",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003161",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000240",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "001789",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "003751",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000210",
+        "status_code": 201,
+        "success": true
+      },
+      {
+        "employee_id": "000131",
+        "status_code": 400,
+        "error": "API 回傳錯誤狀態碼: 400",
+        "success": false
+      },
+      {
+        "employee_id": "000144",
+        "status_code": 201,
+        "success": true
+      }
+    ]
+  }
+]

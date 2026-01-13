@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import requests
 import os
 import threading
+from datetime import datetime
+from history import save_history_record, load_history, get_notification_type_name
 
 # config檔案設定
 # with open("config.json") as config_file:
@@ -21,6 +23,9 @@ import threading
 # }
 
 app = Flask(__name__)
+
+# 設置 secret key 用於 session（用於 POST-Redirect-GET 模式）
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "your-secret-key-change-this-in-production")
 
 # .env 文件的路徑
 dotenv_path = os.path.join(os.getcwd(), '.env')
@@ -49,6 +54,46 @@ HEADERS = {
 @app.route('/')
 def index():
     return render_template('index.html')  #讀取html檔案
+
+@app.route('/history')
+def history():
+    """顯示歷史記錄列表"""
+    records = load_history()
+    # 按時間倒序排列（最新的在前）
+    records.reverse()
+    
+    # 添加類型中文名稱
+    for record in records:
+        record['type_name'] = get_notification_type_name(record.get('notification_type', ''))
+    
+    return render_template('history.html', records=records)
+
+@app.route('/history/<int:record_id>')
+def history_detail(record_id):
+    """顯示單一記錄的詳細資訊"""
+    records = load_history()
+    record = next((r for r in records if r['id'] == record_id), None)
+    
+    if not record:
+        return "記錄不存在", 404
+    
+    record['type_name'] = get_notification_type_name(record.get('notification_type', ''))
+    return render_template('history_detail.html', record=record)
+
+@app.route('/result')
+def push_result():
+    """顯示推播結果（POST-Redirect-GET 模式）"""
+    result_data = session.pop('push_result', None)
+    
+    if not result_data:
+        # 如果沒有結果數據，重定向到首頁
+        return redirect(url_for('index'))
+    
+    return render_template('result.html',
+        message=result_data.get('message'),
+        summary=result_data.get('summary'),
+        responses=result_data.get('responses')
+    )
 
 # 發送單一推播通知的函數
 def send_notification(employee_id, amount, body_text, file_title):
@@ -121,7 +166,7 @@ def send_notification(employee_id, amount, body_text, file_title):
         }
 
 # 上傳excel檔案
-@app.route('/fpns/upload', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_file():
     print(request.form)
     if 'file' not in request.files:
@@ -277,8 +322,18 @@ def upload_file():
             
             print(f"推播完成: 成功 {success_count} 則, 失敗 {fail_count} 則")
             
-            # 回傳所有推播結果
-            return jsonify({
+            # 保存歷史記錄
+            save_history_record(
+                notification_type=notification_type,
+                filename=file.filename,
+                total=len(responses),
+                success=success_count,
+                failed=fail_count,
+                responses=responses
+            )
+            
+            # 使用 session 保存推播結果，然後重定向（POST-Redirect-GET 模式）
+            session['push_result'] = {
                 "message": "推播處理完成",
                 "summary": {
                     "total": len(responses),
@@ -286,7 +341,10 @@ def upload_file():
                     "failed": fail_count
                 },
                 "responses": responses
-            }), 200
+            }
+            
+            # 重定向到結果頁面（避免重新整理重複提交）
+            return redirect(url_for('push_result'))
             
         except Exception as e:
             print("Error during file processing:", e)

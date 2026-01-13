@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推播歷史記錄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 70px;
+        }
+
+        .navbar-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .navbar-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .navbar-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-link.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 100px auto 50px;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .history-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .history-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .history-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .history-info {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .value-total { color: #333; }
+        .value-success { color: #28a745; }
+        .value-failed { color: #dc3545; }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #e68a11;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .history-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .container {
+                margin-top: 90px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">
+                <span>📢</span>
+                <span>福委會推播系統</span>
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="/" class="navbar-link">推播管理</a></li>
+                <li><a href="/history" class="navbar-link active">歷史記錄</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>📋 推播歷史記錄</h1>
+
+        {% if records %}
+            {% for record in records %}
+            <div class="history-card" onclick="window.location.href='/history/{{ record.id }}'">
+                <div class="history-header">
+                    <div>
+                        <span class="type-badge">{{ record.type_name }}</span>
+                        <span class="history-title">{{ record.filename }}</span>
+                    </div>
+                    <div class="history-time">
+                        {{ record.timestamp[:19].replace('T', ' ') }}
+                    </div>
+                </div>
+
+                <div class="history-info">
+                    <div class="info-item">
+                        <span class="info-label">總計：</span>
+                        <span class="info-value value-total">{{ record.summary.total }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">成功：</span>
+                        <span class="info-value value-success">{{ record.summary.success }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">失敗：</span>
+                        <span class="info-value value-failed">{{ record.summary.failed }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <p>尚無推播記錄</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

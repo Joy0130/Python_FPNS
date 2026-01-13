@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推播詳情 - {{ record.filename }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 70px;
+        }
+
+        .navbar-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 100px auto 50px;
+            padding: 20px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: #e68a11;
+        }
+
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .detail-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .detail-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #e68a11;
+            color: white;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            padding: 20px;
+            background: #e8e8e8;
+            border-radius: 8px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .total { color: #333; }
+        .success { color: #28a745; }
+        .failed { color: #dc3545; }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .details-table thead {
+            background: #f0f0f0;
+        }
+
+        .details-table th,
+        .details-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .details-table th {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .details-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .error-msg {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .summary {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .container {
+                margin-top: 90px;
+                padding: 10px;
+            }
+
+            .details-table {
+                font-size: 14px;
+            }
+
+            .details-table th,
+            .details-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 導航欄 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-logo">
+                <span>📢</span>
+                <span>福委會推播系統</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/history" class="back-btn">← 返回列表</a>
+
+        <div class="detail-card">
+            <div class="detail-header">
+                <h1 class="detail-title">{{ record.filename }}</h1>
+                <div class="detail-meta">
+                    <span class="type-badge">{{ record.type_name }}</span>
+                    <span>🕒 {{ record.timestamp[:19].replace('T', ' ') }}</span>
+                </div>
+            </div>
+
+            <!-- 統計摘要 -->
+            <div class="summary">
+                <div class="summary-item">
+                    <div class="summary-number total">{{ record.summary.total }}</div>
+                    <div class="summary-label">總推播數</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number success">{{ record.summary.success }}</div>
+                    <div class="summary-label">成功</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number failed">{{ record.summary.failed }}</div>
+                    <div class="summary-label">失敗</div>
+                </div>
+            </div>
+
+            <!-- 詳細記錄表格 -->
+            <h2 style="color: #333; margin-bottom: 15px;">詳細記錄</h2>
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>員工編號</th>
+                        <th>狀態碼</th>
+                        <th>結果</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in record.details %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ detail.employee_id }}</td>
+                        <td>{{ detail.status_code }}</td>
+                        <td>
+                            {% if detail.success %}
+                                <span class="status-badge badge-success">✓ 成功</span>
+                            {% else %}
+                                <span class="status-badge badge-failed">✗ 失敗</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

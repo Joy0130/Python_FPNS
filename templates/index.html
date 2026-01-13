@@ -3,9 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>上傳檔案</title>
+    <title>推播管理</title>
 
     <style>
+        /* 導航欄樣式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 70px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-logo:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar-icon {
+            font-size: 28px;
+        }
+
+        .navbar-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .navbar-item {
+            position: relative;
+        }
+
+        .navbar-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .navbar-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .navbar-link.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 響應式設計 */
+        @media screen and (max-width: 768px) {
+            .navbar-menu {
+                display: none;
+            }
+        }
+
         .file-upload-input {
             display: none;
         }
@@ -36,7 +131,7 @@
             height: 3px;
             text-align: center;
             /* margin: auto; */
-            background-color: #22aaf8;
+            background-color: #e68a11;
             border-radius: 3px; 
             text-decoration: none;
             /* border: 1px solid gray; */
@@ -55,7 +150,7 @@
         }
         
         .file-upload__btn:hover {
-            background: #009ffc; 
+            background: #e68a11; 
             transform: scale(1.05); /* 懸停微縮放效果 */
             box-shadow: 1px 1px 10px gray;
         }
@@ -82,7 +177,7 @@
             height: 80px;
             border: none;
             border-radius: 5px;
-            background: #22aaf8; 
+            background:#e68a11; 
             color: white;
             font-size: 18px;
             font-weight: bold;
@@ -91,7 +186,7 @@
         }
 
         .file-upload button:hover {
-            background: #0289d8;
+            background: #e68a11;
             transform: scale(1.05); 
         }
 
@@ -136,7 +231,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-top: 90px;
+        margin-top: 120px;
         font-family: Arial, sans-serif;
     }
 
@@ -164,7 +259,7 @@
     /* 當選單聚焦時的樣式 */
     .selection select:focus {
         outline: none;
-        border-color: #22aaf8;        /* 聚焦時的邊框顏色 */
+        border-color:#e68a11;        /* 聚焦時的邊框顏色 */
         background-color: #e9f5ff;    /* 聚焦時的背景顏色 */
     }
 
@@ -174,7 +269,27 @@
 
 <body>
 
-    <form action="/fpns/upload" method="post" enctype="multipart/form-data" onsubmit="showLoading();">
+    <!-- 導航欄 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <a href="/" class="navbar-logo">
+                    <span class="navbar-icon">📢</span>
+                    <span>福委會推播系統</span>
+                </a>
+            </div>
+             <ul class="navbar-menu">
+                <li class="navbar-item">
+                    <a href="/" class="navbar-link active">推播管理</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/history" class="navbar-link">歷史記錄</a>
+                </li>
+            </ul> 
+        </div>
+    </nav>
+
+    <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="return validateAndSubmit();">
 
     <!-- 新增下拉式選單 -->
     <div class="selection">
@@ -231,18 +346,31 @@
             document.getElementById('loading').style.display = 'flex';
         }
 
-        //推播類型
-        function validateForm() {
+        // 表單驗證與提交
+        function validateAndSubmit() {
             const notificationType = document.getElementById("notification_type").value;
-            const errorMessage = document.getElementById("error-message");
+            const fileInput = document.querySelector(".file-upload-input");
+            const hasFile = fileInput.files.length > 0;
 
-            if (!notificationType) {  // 檢查是否有選擇推播類型
-                errorMessage.style.display = "block";  // 顯示錯誤訊息
-                return false; // 阻止表單提交
-            } else {
-                errorMessage.style.display = "none"; // 隱藏錯誤訊息
-                return true; // 允許表單提交
+            // 檢查推播類型和檔案是否都已選擇
+            if (!notificationType && !hasFile) {
+                alert("請選擇推播類型和上傳檔案");
+                return false;
             }
+            
+            if (!notificationType) {
+                alert("請選擇推播類型");
+                return false;
+            }
+            
+            if (!hasFile) {
+                alert("請上傳檔案");
+                return false;
+            }
+
+            // 驗證通過，顯示 loading
+            showLoading();
+            return true;
         }
                
     </script>
