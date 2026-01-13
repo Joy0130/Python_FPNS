@@ -40,9 +40,17 @@ sudo docker run -d \
   --name python-fpns-container \
   -e PUSH_API_URL="你的推播API網址" \
   -e PUSH_API_KEY="你的API金鑰" \
+  -e FLASK_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
+  -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
   ghcr.io/joy0130/python_fpns:latest
 ```
+
+> **重要說明：**
+>
+> - `-e FLASK_SECRET_KEY=...` 用於加密 session，**請保存生成的密鑰**
+> - `-v /var/lib/python-fpns:/app/data` 掛載資料目錄，存儲歷史記錄
+> - 更新部署時請使用**相同的 FLASK_SECRET_KEY**
 
 #### 4. **檢查容器狀態**
 
@@ -119,9 +127,13 @@ sudo docker run -d \
   --name python-fpns-container \
   -e PUSH_API_URL="你的推播API網址" \
   -e PUSH_API_KEY="你的API金鑰" \
+  -e FLASK_SECRET_KEY="你儲存的密鑰" \
+  -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
   ghcr.io/joy0130/python_fpns:latest
 ```
+
+> **提醒**: 更新時請使用首次部署時保存的 FLASK_SECRET_KEY
 
 ---
 
@@ -131,12 +143,19 @@ sudo docker run -d \
 
 - `PUSH_API_URL`: 推播 API 的完整網址
 - `PUSH_API_KEY`: API 金鑰
+- `FLASK_SECRET_KEY`: Flask session 加密密鑰（建議使用隨機生成）
 
 您可以透過以下方式設置：
 
 1. **Docker run 命令**（如上所示）
-2. **環境變數文件**：創建 `.env` 文件並使用 `--env-file .env`
+2. **環境變數檔案**：創建 `.env` 檔案並使用 `--env-file .env`
 3. **Docker Compose**：在 `docker-compose.yml` 中配置
+
+### 生成 FLASK_SECRET_KEY
+
+```bash
+python3 -c 'import secrets; print(secrets.token_hex(32))'
+```
 
 ---
 
