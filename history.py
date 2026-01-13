@@ -5,7 +5,10 @@ import pandas as pd
 import requests
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# 台灣時區 UTC+8
+TAIWAN_TZ = timezone(timedelta(hours=8))
 
 # 歷史記錄文件路徑
 HISTORY_FILE = 'data/history.json'
@@ -37,7 +40,7 @@ def save_history_record(notification_type, filename, total, success, failed, res
     # 創建新記錄
     record = {
         'id': len(history) + 1,
-        'timestamp': datetime.now().isoformat(),
+        'timestamp': datetime.now(TAIWAN_TZ).isoformat(),
         'notification_type': notification_type,
         'filename': filename,
         'summary': {
