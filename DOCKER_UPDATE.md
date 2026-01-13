@@ -27,9 +27,9 @@ sudo mkdir -p /var/lib/python-fpns
 sudo docker run -d \
   -p 5001:5001 \
   --name python-fpns-container \
-  -e PUSH_API_URL="你的推播API網址" \
-  -e PUSH_API_KEY="你的API金鑰" \
-  -e FLASK_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
+  -e PUSH_API_URL="env中的PUSH_API_URL推播API網址" \
+  -e PUSH_API_KEY="env中的PUSH_API_KEY推播API金鑰" \
+  -e FLASK_SECRET_KEY="env中的FLASK_SECRET_KEY" \
   -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
   ghcr.io/joy0130/python_fpns:latest
@@ -40,8 +40,28 @@ sudo docker run -d \
 ### 1. 新增環境變數
 
 - **FLASK_SECRET_KEY**: 用於加密 Flask session
-  - 首次部署：使用命令生成隨機密鑰
-  - 更新部署：請使用相同的密鑰，否則現有 session 會失效
+
+  **設置方式（二選一）：**
+
+  A. **使用現有 env 中設定的密鑰（推薦）**
+
+  ```bash
+  -e FLASK_SECRET_KEY="env中的FLASK_SECRET_KEY"
+  ```
+
+  > 直接使用您 `.env` 檔案中的 `FLASK_SECRET_KEY`，保持本地與 Docker 一致
+
+  B. **生成新密鑰（僅首次）**
+
+  ```bash
+  # 先生成並記錄密鑰
+  python3 -c 'import secrets; print(secrets.token_hex(32))'
+
+  # 然後使用生成的密鑰
+  -e FLASK_SECRET_KEY="生成的密鑰"
+  ```
+
+  > **重要**：生成後請**保存密鑰**，後續更新需使用相同密鑰
 
 ### 2. 資料目錄掛載
 
@@ -57,6 +77,9 @@ docker ps | grep python-fpns
 
 # 查看日誌
 docker logs python-fpns-container
+
+# 即時追蹤日誌
+docker logs -f python-fpns-container
 
 # 訪問應用
 curl http://localhost:5001

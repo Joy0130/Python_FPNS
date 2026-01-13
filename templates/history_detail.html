@@ -48,9 +48,9 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 100px auto 50px;
-            padding: 20px;
+            padding: 20px 2rem;
         }
 
         .back-btn {
@@ -254,6 +254,7 @@
                         <th>員工編號</th>
                         <th>狀態碼</th>
                         <th>結果</th>
+                        <th>錯誤訊息</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -267,6 +268,11 @@
                                 <span class="status-badge badge-success">✓ 成功</span>
                             {% else %}
                                 <span class="status-badge badge-failed">✗ 失敗</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if detail.error %}
+                                <div class="error-msg">{{ detail.error }}</div>
                             {% endif %}
                         </td>
                     </tr>

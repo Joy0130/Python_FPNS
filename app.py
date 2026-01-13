@@ -68,6 +68,25 @@ def history():
     
     return render_template('history.html', records=records)
 
+@app.route('/result')
+def push_result():
+    """顯示推播結果（POST-Redirect-GET 模式）"""
+    result_data = session.pop('push_result', None)
+    
+    if not result_data:
+        # 如果沒有結果數據，重定向到首頁
+        return redirect(url_for('index'))
+    
+    # 排序 responses：失敗的在前，成功的在後
+    responses = result_data.get('responses', [])
+    sorted_responses = sorted(responses, key=lambda x: (x.get('success', True), x.get('employee_id', '')))
+    
+    return render_template('result.html',
+        message=result_data.get('message'),
+        summary=result_data.get('summary'),
+        responses=sorted_responses
+    )
+
 @app.route('/history/<int:record_id>')
 def history_detail(record_id):
     """顯示單一記錄的詳細資訊"""
@@ -78,22 +97,12 @@ def history_detail(record_id):
         return "記錄不存在", 404
     
     record['type_name'] = get_notification_type_name(record.get('notification_type', ''))
+    
+    # 排序 details：失敗的在前，成功的在後
+    if 'details' in record:
+        record['details'] = sorted(record['details'], key=lambda x: (x.get('success', True), x.get('employee_id', '')))
+    
     return render_template('history_detail.html', record=record)
-
-@app.route('/result')
-def push_result():
-    """顯示推播結果（POST-Redirect-GET 模式）"""
-    result_data = session.pop('push_result', None)
-    
-    if not result_data:
-        # 如果沒有結果數據，重定向到首頁
-        return redirect(url_for('index'))
-    
-    return render_template('result.html',
-        message=result_data.get('message'),
-        summary=result_data.get('summary'),
-        responses=result_data.get('responses')
-    )
 
 # 發送單一推播通知的函數
 def send_notification(employee_id, amount, body_text, file_title):
