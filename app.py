@@ -145,10 +145,16 @@ def send_notification(employee_id, amount, body_text, file_title):
             }
         else:
             # HTTP 錯誤狀態碼（4xx, 5xx）
+            try:
+                error_detail = response.json()
+                error_message = error_detail.get('message', response.text)
+            except:
+                error_message = response.text
+            
             return {
                 "employee_id": employee_id,
                 "status_code": response.status_code,
-                "error": f"API 回傳錯誤狀態碼: {response.status_code}",
+                "error": f"API 錯誤 {response.status_code}: {error_message}",
                 "success": False
             }
     except requests.exceptions.Timeout:
