@@ -7,7 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 # 複製專案配置文件
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
 # 複製應用程式碼和模板
 COPY app.py ./
