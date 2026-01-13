@@ -11,6 +11,7 @@ COPY pyproject.toml uv.lock ./
 
 # 複製應用程式碼和模板
 COPY app.py ./
+COPY history.py ./
 COPY templates ./templates
 COPY static ./static
 
