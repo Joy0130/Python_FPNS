@@ -43,9 +43,10 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-@app.route("/fpns")
-@app.route("/fpns/")
-@app.route('/fpns/index')
+# @app.route("/fpns")
+# @app.route("/fpns/")
+# @app.route('/fpns/index')
+@app.route('/')
 def index():
     return render_template('index.html')  #讀取html檔案
 
