@@ -15,3 +15,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+#data
+/data/history.json
+/data/scheduled_notifications.json
