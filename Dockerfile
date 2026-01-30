@@ -19,6 +19,9 @@ COPY static ./static
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
+# 創建data目錄用於存放數據文件
+RUN mkdir -p /app/data
+
 # 同步依賴（會自動創建虛擬環境）
 RUN uv sync --no-install-project --frozen
 

@@ -54,7 +54,7 @@ HEADERS = {
 }
 
 # 排程推播資料檔案
-SCHEDULED_NOTIFICATIONS_FILE = 'scheduled_notifications.json'
+SCHEDULED_NOTIFICATIONS_FILE = 'data/scheduled_notifications.json'
 TAIWAN_TZ = pytz.timezone('Asia/Taipei')
 
 # 初始化背景排程器
