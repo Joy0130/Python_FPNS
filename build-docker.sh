@@ -4,7 +4,7 @@
 uv sync --no-install-project
 
 # 設置映像名稱
-IMAGE_NAME="ghcr.io/joy0130/python_fpns:latest"
+IMAGE_NAME="ghcr.io/joy0130/python_fpns:FPNS"
 
 # 構建 Docker 映像
 echo "� 構建 Docker 映像..."
