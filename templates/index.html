@@ -5,266 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>推播管理</title>
 
-    <style>
-        /* 導航欄樣式 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-        }
-
-        .navbar-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
-            height: 70px;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .navbar-logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.3s ease;
-        }
-
-        .navbar-logo:hover {
-            transform: scale(1.05);
-        }
-
-        .navbar-icon {
-            font-size: 28px;
-        }
-
-        .navbar-menu {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .navbar-item {
-            position: relative;
-        }
-
-        .navbar-link {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 5px;
-            display: block;
-        }
-
-        .navbar-link:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .navbar-link.active {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* 響應式設計 */
-        @media screen and (max-width: 768px) {
-            .navbar-menu {
-                display: none;
-            }
-        }
-
-        .file-upload-input {
-            display: none;
-        }
-
-        .file-upload-zone	{
-            margin: 110px auto;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            padding: 10px;
-            width: 400px;
-            height: 300px;
-            background-color: #fdfdfd;
-            border-radius: 5px;
-            /* border: 1px gray; */
-            /* text-transform: capitalize; */
-            box-shadow: 1px 1px 10px gray;
-            cursor: pointer;
-        }
-
-        .file-upload__btn {
-            flex-grow: 1;
-            border:none;
-            padding:3px 7px;
-            color: white;
-            font-weight: bold;
-            width: 100px;
-            height: 3px;
-            text-align: center;
-            /* margin: auto; */
-            background-color: #e68a11;
-            border-radius: 3px; 
-            text-decoration: none;
-            /* border: 1px solid gray; */
-        }
-        .cancel_file-upload__btn {
-            flex-grow: 1;
-            border:none;
-            padding:2px 2px -15px;
-            color: black;
-            width: 100px;
-            height: 10px;
-            text-align: center;
-            border-radius: 3px; 
-            text-decoration: none;
-            margin-left: auto;
-        }
-        
-        .file-upload__btn:hover {
-            background: #e68a11; 
-            transform: scale(1.05); /* 懸停微縮放效果 */
-            box-shadow: 1px 1px 10px gray;
-        }
-
-        .file-upload__btn:active {
-            transform: scale(0.98); /* 點擊縮小效果 */
-        }
-
-        .file-upload__name {
-        /* 	flex-grow: 2; */
-            font-size: 14px;
-            color: rgb(0, 0, 0);
-            font-weight: bold;
-        }
-        .file-upload	{
-            margin: 120px auto;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            width: 300px;
-            border-radius: 5px;
-        }
-        .file-upload button {
-            height: 80px;
-            border: none;
-            border-radius: 5px;
-            background:#e68a11; 
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.2s; 
-        }
-
-        .file-upload button:hover {
-            background: #e68a11;
-            transform: scale(1.05); 
-        }
-
-        .file-upload button:active {
-            transform: scale(0.98); 
-        }
-
-        .file-upload__text-container {
-            flex-grow: 6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .file-upload__name{
-            font-size: 14px;
-            margin-top: 10px; 
-        }
-        .image{
-            width: 100px;
-            height: 100px;
-            margin: 90px auto;
-            display: flex;
-            flex-direction: column;
-            padding: auto;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .loading-container {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        justify-content: center;
-        align-items: center;
-    }
-    /* 讓選單容器水平置中對齊 */
-    .selection {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 120px;
-        font-family: Arial, sans-serif;
-    }
-
-    /* 標籤樣式 */
-    .selection label {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 8px;
-        color: red;
-    }
-
-    /* 美化選單 */
-    .selection select {
-        width: 200px;                 /* 調整寬度 */
-        padding: 10px;                /* 增加內邊距 */
-        font-size: 16px;              /* 調整字體大小 */
-        border-radius: 8px;           /* 圓角效果 */
-        border: 1px solid #ccc;       /* 邊框顏色 */
-        background-color: #f7f7f7;    /* 背景顏色 */
-        text-align: center;           /* 文字置中 */
-        cursor: pointer;
-        transition: all 0.3s ease;    /* 增加過渡效果 */
-    }
-
-    /* 當選單聚焦時的樣式 */
-    .selection select:focus {
-        outline: none;
-        border-color:#e68a11;        /* 聚焦時的邊框顏色 */
-        background-color: #e9f5ff;    /* 聚焦時的背景顏色 */
-    }
-
-
-      </style>
 </head>
 
 <body>
@@ -278,7 +20,12 @@
                     <span>福委會推播系統</span>
                 </a>
             </div>
-             <ul class="navbar-menu">
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="navbar-menu" id="navbar-menu">
                 <li class="navbar-item">
                     <a href="/" class="navbar-link active">推播管理</a>
                 </li>
@@ -301,6 +48,30 @@
             <option value="ftext">春節禮金</option>
         </select>
     </div>
+
+    <!-- 排程推播控制區域 -->
+    <div class="schedule-section">
+        <div class="schedule-toggle">
+            <label class="schedule-label">排程推播</label>
+            <label class="switch">
+                <input type="checkbox" id="schedule_toggle" name="is_scheduled" value="true">
+                <span class="slider"></span>
+            </label>
+        </div>
+        
+        <div id="schedule_fields" class="schedule-fields" style="display: none;">
+            <div class="schedule-input-group">
+                <label for="schedule_date">* 預計發送日期：</label>
+                <input type="date" id="schedule_date" name="schedule_date">
+            </div>
+            <div class="schedule-input-group">
+                <label for="schedule_time">* 預計發送時間：</label>
+                <input type="time" id="schedule_time" name="schedule_time">
+            </div>
+            <div class="schedule-hint">台灣標準時間</div>
+        </div>
+    </div>
+
         <div class="container">
             <input class="file-upload-input" name="file" type="file" accept=".xlsx, .xls">
             <div class="file-upload-zone" onclick="document.querySelector('.file-upload-input').click();" ondrop="dropHandler(event);" ondragover="event.preventDefault();">
@@ -323,10 +94,63 @@
     </div>
 
     <script>
+        // 漢堡選單切換
+        const hamburger = document.getElementById('hamburger');
+        const navbarMenu = document.getElementById('navbar-menu');
+        
+        hamburger.addEventListener('click', function() {
+            navbarMenu.classList.toggle('active');
+        });
+        
+        // 點擊菜單項後自動關閉菜單
+        document.querySelectorAll('.navbar-link').forEach(link => {
+            link.addEventListener('click', function() {
+                navbarMenu.classList.remove('active');
+            });
+        });
     
         const fileInput = document.querySelector(".file-upload-input");
         const fileNameZone = document.querySelector(".file-upload__name");
+        const scheduleToggle = document.getElementById("schedule_toggle");
+        const scheduleFields = document.getElementById("schedule_fields");
+        const scheduleDateInput = document.getElementById("schedule_date");
+        const scheduleTimeInput = document.getElementById("schedule_time");
     
+        // 設定日期和時間的最小值（當前時間）
+        function setMinDateTime() {
+            const now = new Date();
+            
+            // 設定日期最小值為今天
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            scheduleDateInput.min = todayStr;
+            
+            // 如果選擇的是今天，時間最小值為當前時間
+            scheduleDateInput.addEventListener('change', function() {
+                if (this.value === todayStr) {
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    scheduleTimeInput.min = `${hours}:${minutes}`;
+                } else {
+                    scheduleTimeInput.min = '00:00';
+                }
+            });
+        }
+        
+        // 初始化日期時間限制
+        setMinDateTime();
+        
+        // 確保點擊日期時間輸入框可以打開選擇器
+        scheduleDateInput.addEventListener('click', function() {
+            this.showPicker && this.showPicker();
+        });
+        
+        scheduleTimeInput.addEventListener('click', function() {
+            this.showPicker && this.showPicker();
+        });
+        
         // 顯示上傳檔案名稱
         fileInput.addEventListener("change", function (e) {
             const fileName = e.target.files[0]?.name || '未選擇任何檔案';
@@ -340,6 +164,18 @@
             fileInput.files = event.dataTransfer.files;
             fileNameZone.textContent = file?.name || '未選擇任何檔案';
         }
+        
+        // 排程開關切換
+        scheduleToggle.addEventListener("change", function() {
+            if (this.checked) {
+                scheduleFields.style.display = "flex";
+            } else {
+                scheduleFields.style.display = "none";
+                // 清空排程欄位
+                scheduleDateInput.value = "";
+                scheduleTimeInput.value = "";
+            }
+        });
     
         // 顯示 Loading 畫面
         function showLoading() {
@@ -351,6 +187,7 @@
             const notificationType = document.getElementById("notification_type").value;
             const fileInput = document.querySelector(".file-upload-input");
             const hasFile = fileInput.files.length > 0;
+            const isScheduled = scheduleToggle.checked;
 
             // 檢查推播類型和檔案是否都已選擇
             if (!notificationType && !hasFile) {
@@ -366,6 +203,26 @@
             if (!hasFile) {
                 alert("請上傳檔案");
                 return false;
+            }
+            
+            // 如果啟用排程，檢查日期和時間是否已填寫
+            if (isScheduled) {
+                const scheduleDate = scheduleDateInput.value;
+                const scheduleTime = scheduleTimeInput.value;
+                
+                if (!scheduleDate || !scheduleTime) {
+                    alert("請填寫完整的排程日期和時間");
+                    return false;
+                }
+                
+                // 檢查排程時間是否在未來
+                const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+                const now = new Date();
+                
+                if (scheduledDateTime <= now) {
+                    alert("排程時間必須是未來的時間");
+                    return false;
+                }
             }
 
             // 驗證通過，顯示 loading

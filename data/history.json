@@ -3898,5 +3898,47 @@
         "success": true
       }
     ]
+  },
+  {
+    "id": 9,
+    "schedule_id": "schedule_1769751589110",
+    "timestamp": "2026-01-30T13:39:49.115428+08:00",
+    "notification_type": "ftext",
+    "filename": "114年農曆春節禮金個人測試.xlsx",
+    "is_scheduled": true,
+    "scheduled_time": "2026-01-30T13:42:00+08:00",
+    "status": "completed",
+    "summary": {
+      "total": 1,
+      "success": 1,
+      "failed": 0
+    },
+    "details": [
+      {
+        "employee_id": "003523",
+        "status_code": 201,
+        "success": true
+      }
+    ],
+    "executed_at": "2026-01-30T13:42:00.391065+08:00"
+  },
+  {
+    "id": 10,
+    "timestamp": "2026-01-30T13:51:40.466248+08:00",
+    "notification_type": "ftext",
+    "filename": "114年農曆春節禮金個人測試.xlsx",
+    "is_scheduled": false,
+    "summary": {
+      "total": 1,
+      "success": 1,
+      "failed": 0
+    },
+    "details": [
+      {
+        "employee_id": "003523",
+        "status_code": 201,
+        "success": true
+      }
+    ]
   }
 ]

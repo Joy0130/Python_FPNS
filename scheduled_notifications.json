@@ -1,0 +1,20 @@
+{
+  "schedules": [
+    {
+      "id": "schedule_1769746439509",
+      "notification_type": "ftext",
+      "filename": "114年農曆春節禮金個人測試.xlsx",
+      "schedule_datetime": "2026-01-30T13:00:00+08:00",
+      "notification_tasks": [
+        {
+          "employee_id": "003523",
+          "amount": 1000,
+          "body_text": "農曆春節禮金已發放，請至薪資帳戶查看，您的春節禮金總金額為",
+          "file_title": "114年農曆春節禮金個人測試"
+        }
+      ],
+      "created_at": "2026-01-30T12:13:59.509780+08:00",
+      "status": "pending"
+    }
+  ]
+}

@@ -6,6 +6,11 @@ import requests
 import os
 import threading
 from datetime import datetime
+import json
+from pathlib import Path
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.date import DateTrigger
+import pytz
 from history import save_history_record, load_history, get_notification_type_name
 
 # config檔案設定
@@ -47,6 +52,181 @@ HEADERS = {
     "push-api-key": API_KEY,
     "Content-Type": "application/json"
 }
+
+# 排程推播資料檔案
+SCHEDULED_NOTIFICATIONS_FILE = 'scheduled_notifications.json'
+TAIWAN_TZ = pytz.timezone('Asia/Taipei')
+
+# 初始化背景排程器
+scheduler = BackgroundScheduler(timezone=TAIWAN_TZ)
+scheduler.start()
+
+# 載入排程推播資料
+def load_scheduled_notifications():
+    """載入排程推播資料"""
+    if not os.path.exists(SCHEDULED_NOTIFICATIONS_FILE):
+        return {"schedules": []}
+    try:
+        with open(SCHEDULED_NOTIFICATIONS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"載入排程資料錯誤: {e}")
+        return {"schedules": []}
+
+# 保存排程推播資料
+def save_scheduled_notifications(data):
+    """保存排程推播資料"""
+    try:
+        with open(SCHEDULED_NOTIFICATIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"保存排程資料錯誤: {e}")
+
+# 新增排程推播
+def add_scheduled_notification(schedule_id, notification_type, filename, schedule_datetime, notification_tasks):
+    """新增排程推播"""
+    data = load_scheduled_notifications()
+    data['schedules'].append({
+        'id': schedule_id,
+        'notification_type': notification_type,
+        'filename': filename,
+        'schedule_datetime': schedule_datetime.isoformat(),
+        'notification_tasks': notification_tasks,
+        'created_at': datetime.now(TAIWAN_TZ).isoformat(),
+        'status': 'pending'
+    })
+    save_scheduled_notifications(data)
+
+# 移除排程推播
+def remove_scheduled_notification(schedule_id):
+    """移除已執行的排程"""
+    data = load_scheduled_notifications()
+    data['schedules'] = [s for s in data['schedules'] if s['id'] != schedule_id]
+    save_scheduled_notifications(data)
+
+# 執行排程的推播任務
+def execute_scheduled_notification(schedule_id):
+    """執行排程的推播任務"""
+    print(f"\n========== 開始執行排程推播 ==========")
+    print(f"排程ID: {schedule_id}")
+    print(f"執行時間: {datetime.now(TAIWAN_TZ)}")
+    
+    # 載入排程資料
+    data = load_scheduled_notifications()
+    schedule = next((s for s in data['schedules'] if s['id'] == schedule_id), None)
+    
+    if not schedule:
+        print(f"找不到排程 {schedule_id}")
+        return
+    
+    notification_tasks = schedule['notification_tasks']
+    notification_type = schedule['notification_type']
+    filename = schedule['filename']
+    
+    print(f"準備發送 {len(notification_tasks)} 則排程推播...")
+    
+    # 使用現有的多線程發送邏輯
+    responses = []
+    max_workers = 10
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_task = {
+            executor.submit(
+                send_notification,
+                task['employee_id'],
+                task['amount'],
+                task['body_text'],
+                task['file_title']
+            ): task for task in notification_tasks
+        }
+        
+        for future in as_completed(future_to_task):
+            task = future_to_task[future]
+            try:
+                result = future.result()
+                responses.append(result)
+                print(f"已發送排程推播給員工 {result['employee_id']}: 狀態碼 {result.get('status_code', 'N/A')}")
+            except Exception as e:
+                responses.append({
+                    "employee_id": task['employee_id'],
+                    "status_code": 500,
+                    "error": f"執行錯誤: {str(e)}",
+                    "success": False
+                })
+    
+    # 統計結果
+    success_count = sum(1 for r in responses if r.get('success', False))
+    fail_count = len(responses) - success_count
+    
+    print(f"排程推播完成: 成功 {success_count} 則, 失敗 {fail_count} 則")
+    
+    # 更新歷史記錄（將待發送改為已發送）
+    history = load_history()
+    # 找到對應的排程記錄並更新
+    for record in history:
+        if record.get('schedule_id') == schedule_id:
+            record['status'] = 'completed'
+            record['executed_at'] = datetime.now(TAIWAN_TZ).isoformat()
+            record['summary'] = {
+                'total': len(responses),
+                'success': success_count,
+                'failed': fail_count
+            }
+            record['details'] = responses
+            break
+    
+    # 如果沒找到記錄，創建新的
+    if not any(r.get('schedule_id') == schedule_id for r in history):
+        save_history_record(
+            notification_type=notification_type,
+            filename=filename,
+            total=len(responses),
+            success=success_count,
+            failed=fail_count,
+            responses=responses,
+            is_scheduled=True,
+            scheduled_time=schedule['schedule_datetime'],
+            schedule_id=schedule_id
+        )
+    else:
+        # 保存更新後的歷史記錄
+        try:
+            with open('data/history.json', 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"更新歷史記錄失敗: {e}")
+    
+    # 移除已執行的排程
+    remove_scheduled_notification(schedule_id)
+    print(f"已移除排程 {schedule_id}")
+
+# 恢復應用重啟前的排程任務
+def restore_scheduled_jobs():
+    """從檔案恢復排程任務（應用重啟時）"""
+    data = load_scheduled_notifications()
+    now = datetime.now(TAIWAN_TZ)
+    
+    for schedule in data['schedules']:
+        schedule_id = schedule['id']
+        schedule_datetime_str = schedule['schedule_datetime']
+        schedule_datetime = datetime.fromisoformat(schedule_datetime_str)
+        
+        # 如果排程時間還沒到，重新註冊任務
+        if schedule_datetime > now:
+            scheduler.add_job(
+                execute_scheduled_notification,
+                trigger=DateTrigger(run_date=schedule_datetime),
+                args=[schedule_id],
+                id=schedule_id,
+                replace_existing=True
+            )
+            print(f"已恢復排程: {schedule_id}, 預計執行時間: {schedule_datetime}")
+        else:
+            # 過期的排程，標記為已過期但不刪除（讓使用者知道）
+            print(f"排程 {schedule_id} 已過期，跳過")
+
+# 應用啟動時恢復排程
+restore_scheduled_jobs()
 
 # @app.route("/fpns")
 # @app.route("/fpns/")
@@ -300,66 +480,156 @@ def upload_file():
             
             print(f"準備發送 {len(notification_tasks)} 則推播通知...")
             
-            # 使用多線程並發發送推播（最多同時發送 10 個請求）
-            responses = []
-            max_workers = 10  # 可以根據 API 伺服器容量調整
-            # 使用 ThreadPoolExecutor 進行並發發送
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                # 提交所有任務
-                future_to_task = {
-                    executor.submit(
-                        send_notification,
-                        task['employee_id'],
-                        task['amount'],
-                        task['body_text'],
-                        task['file_title']
-                    ): task for task in notification_tasks
+            # 檢查是否為排程推播
+            is_scheduled = request.form.get("is_scheduled") == "true"
+            schedule_date = request.form.get("schedule_date")
+            schedule_time = request.form.get("schedule_time")
+            
+            if is_scheduled and schedule_date and schedule_time:
+                # 排程推播邏輯
+                try:
+                    # 解析排程時間
+                    schedule_datetime_str = f"{schedule_date}T{schedule_time}:00"
+                    schedule_datetime = datetime.fromisoformat(schedule_datetime_str)
+                    # 加上台灣時區
+                    schedule_datetime = TAIWAN_TZ.localize(schedule_datetime)
+                    
+                    # 檢查排程時間是否在未來
+                    now = datetime.now(TAIWAN_TZ)
+                    if schedule_datetime <= now:
+                        return jsonify({"error": "排程時間必須是未來的時間"}), 400
+                    
+                    # 生成唯一的排程 ID
+                    schedule_id = f"schedule_{int(datetime.now().timestamp() * 1000)}"
+                    
+                    # 保存排程資料
+                    add_scheduled_notification(
+                        schedule_id=schedule_id,
+                        notification_type=notification_type,
+                        filename=file.filename,
+                        schedule_datetime=schedule_datetime,
+                        notification_tasks=notification_tasks
+                    )
+                    
+                    # 註冊排程任務
+                    scheduler.add_job(
+                        execute_scheduled_notification,
+                        trigger=DateTrigger(run_date=schedule_datetime),
+                        args=[schedule_id],
+                        id=schedule_id,
+                        replace_existing=True
+                    )
+                    
+                    print(f"\n========== 排程推播已建立 ==========")
+                    print(f"排程ID: {schedule_id}")
+                    print(f"預計執行時間: {schedule_datetime}")
+                    print(f"排程任務數: {len(notification_tasks)}")
+                    
+                    # 立即創建歷史記錄（狀態為待發送）
+                    from history import ensure_data_directory
+                    ensure_data_directory()
+                    history = load_history()
+                    record = {
+                        'id': len(history) + 1,
+                        'schedule_id': schedule_id,
+                        'timestamp': datetime.now(TAIWAN_TZ).isoformat(),
+                        'notification_type': notification_type,
+                        'filename': file.filename,
+                        'is_scheduled': True,
+                        'scheduled_time': schedule_datetime.isoformat(),
+                        'status': 'pending',
+                        'summary': {
+                            'total': len(notification_tasks),
+                            'success': 0,
+                            'failed': 0
+                        },
+                        'details': []
+                    }
+                    history.append(record)
+                    try:
+                        with open('data/history.json', 'w', encoding='utf-8') as f:
+                            json.dump(history, f, ensure_ascii=False, indent=2)
+                        print(f"已創建歷史記錄: ID {record['id']}")
+                    except Exception as e:
+                        print(f"保存歷史記錄失敗: {e}")
+                    
+                    # 返回排程確認訊息
+                    session['push_result'] = {
+                        "message": f"推播已排程",
+                        "summary": {
+                            "scheduled": True,
+                            "schedule_time": schedule_datetime.strftime("%Y-%m-%d %H:%M"),
+                            "total": len(notification_tasks)
+                        },
+                        "responses": []
+                    }
+                    
+                    return redirect(url_for('push_result'))
+                    
+                except Exception as e:
+                    print(f"建立排程推播錯誤: {e}")
+                    return jsonify({"error": f"排程推播錯誤: {str(e)}"}), 500
+            else:
+                # 即時推播邏輯（原有邏輯）
+                responses = []
+                max_workers = 10  # 可以根據 API 伺服器容量調整
+                # 使用 ThreadPoolExecutor 進行並發發送
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    # 提交所有任務
+                    future_to_task = {
+                        executor.submit(
+                            send_notification,
+                            task['employee_id'],
+                            task['amount'],
+                            task['body_text'],
+                            task['file_title']
+                        ): task for task in notification_tasks
+                    }
+                    
+                    # 收集結果，將結果加到responses列表中
+                    for future in as_completed(future_to_task):
+                        task = future_to_task[future]
+                        try:
+                            result = future.result()
+                            responses.append(result)
+                            print(f"已發送推播給員工 {result['employee_id']}: 狀態碼 {result.get('status_code', 'N/A')}")
+                        except Exception as e:
+                            responses.append({
+                                "employee_id": task['employee_id'],
+                                "status_code": 500,
+                                "error": f"執行錯誤: {str(e)}",
+                                "success": False
+                            })
+
+                # 統計成功和失敗的數量
+                success_count = sum(1 for r in responses if r.get('success', False))
+                fail_count = len(responses) - success_count
+                
+                print(f"推播完成: 成功 {success_count} 則, 失敗 {fail_count} 則")
+                
+                # 保存歷史記錄
+                save_history_record(
+                    notification_type=notification_type,
+                    filename=file.filename,
+                    total=len(responses),
+                    success=success_count,
+                    failed=fail_count,
+                    responses=responses
+                )
+                
+                # 使用 session 保存推播結果，然後重定向（POST-Redirect-GET 模式）
+                session['push_result'] = {
+                    "message": "推播處理完成",
+                    "summary": {
+                        "total": len(responses),
+                        "success": success_count,
+                        "failed": fail_count
+                    },
+                    "responses": responses
                 }
                 
-                # 收集結果，將結果加到responses列表中
-                for future in as_completed(future_to_task):
-                    task = future_to_task[future]
-                    try:
-                        result = future.result()
-                        responses.append(result)
-                        print(f"已發送推播給員工 {result['employee_id']}: 狀態碼 {result.get('status_code', 'N/A')}")
-                    except Exception as e:
-                        responses.append({
-                            "employee_id": task['employee_id'],
-                            "status_code": 500,
-                            "error": f"執行錯誤: {str(e)}",
-                            "success": False
-                        })
-
-            # 統計成功和失敗的數量
-            success_count = sum(1 for r in responses if r.get('success', False))
-            fail_count = len(responses) - success_count
-            
-            print(f"推播完成: 成功 {success_count} 則, 失敗 {fail_count} 則")
-            
-            # 保存歷史記錄
-            save_history_record(
-                notification_type=notification_type,
-                filename=file.filename,
-                total=len(responses),
-                success=success_count,
-                failed=fail_count,
-                responses=responses
-            )
-            
-            # 使用 session 保存推播結果，然後重定向（POST-Redirect-GET 模式）
-            session['push_result'] = {
-                "message": "推播處理完成",
-                "summary": {
-                    "total": len(responses),
-                    "success": success_count,
-                    "failed": fail_count
-                },
-                "responses": responses
-            }
-            
-            # 重定向到結果頁面（避免重新整理重複提交）
-            return redirect(url_for('push_result'))
+                # 重定向到結果頁面（避免重新整理重複提交）
+                return redirect(url_for('push_result'))
             
         except Exception as e:
             print("Error during file processing:", e)
