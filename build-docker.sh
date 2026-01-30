@@ -4,7 +4,7 @@
 uv sync --no-install-project
 
 # 設置映像名稱正式機
-# IMAGE_NAME="ghcr.io/joy0130/python_fpns:FPNS"
+# IMAGE_NAME="ghcr.io/joy0130/python_fpns:main"
 
 # 設置映像名稱測試機
 IMAGE_NAME="ghcr.io/joy0130/python_fpns:dev"

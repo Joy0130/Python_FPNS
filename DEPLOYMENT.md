@@ -130,7 +130,7 @@ sudo docker run -d \
   -e FLASK_SECRET_KEY="你儲存的密鑰" \
   -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:latest
+  ghcr.io/joy0130/python_fpns:dev
 ```
 
 > **提醒**: 更新時請使用首次部署時保存的 FLASK_SECRET_KEY

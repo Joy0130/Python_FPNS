@@ -15,19 +15,35 @@ Flask 推播通知系統，支援批量發送 HTML 格式的推播訊息。
 #### 部署步驟
 
 ```bash
-# 拉取最新映像
-docker pull ghcr.io/joy0130/python_fpns:latest
+# 拉取測試映像
+docker pull ghcr.io/joy0130/python_fpns:dev
 
-# 運行容器
+# 拉取正式映像
+docker pull ghcr.io/joy0130/python_fpns:main
+
+# 運行測試容器
 docker run -d \
-  -p 5001:5001 \
-  --name python-fpns-container \
-  -e PUSH_API_URL="你的推播API網址" \
-  -e PUSH_API_KEY="你的API金鑰" \
+  -p 5002:5002 \
+  --name python-fpns-container-dev \
+  -e PUSH_API_URL="你的推播API測試機網址" \
+  -e PUSH_API_KEY="你的API測試機金鑰" \
   -e FLASK_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
   -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:latest
+  ghcr.io/joy0130/python_fpns:dev
+```
+
+```bash
+# 運行正式容器
+docker run -d \
+  -p 5001:5001 \
+  --name python-fpns-container-main \
+  -e PUSH_API_URL="你的推播API正式機網址" \
+  -e PUSH_API_KEY="你的API正式機金鑰" \
+  -e FLASK_SECRET_KEY="你儲存的密鑰" \
+  -v /var/lib/python-fpns:/app/data \
+  --restart unless-stopped \
+  ghcr.io/joy0130/python_fpns:main
 ```
 
 詳細的 Docker 部署說明請參考 [DEPLOYMENT.md](./DEPLOYMENT.md)。
@@ -162,34 +178,54 @@ uv run python script.py
 
 ## 🐳 Docker 部署
 
+### 正式機 main
+
+### 測試機 dev
+
 ### 自動構建（GitHub Actions）
 
-當推送程式碼到 GitHub 的 `main` 分支時，GitHub Actions 會自動：
+當推送程式碼到 GitHub 的 `main` 或 `dev` 分支時，GitHub Actions 會自動：
 
 - 構建 Docker 映像
 - 推送到 GitHub Container Registry (GHCR)
-- 映像路徑：`ghcr.io/joy0130/python_fpns:latest`
+- 映像路徑：`ghcr.io/joy0130/python_fpns:main` 或 `ghcr.io/joy0130/python_fpns:dev`
 
 ### 更新部署
 
 ```bash
-# 拉取最新映像
-docker pull ghcr.io/joy0130/python_fpns:latest
+# 拉取最新映像測試機
+docker pull ghcr.io/joy0130/python_fpns:dev
+
+# 拉取最新映像正式機
+docker pull ghcr.io/joy0130/python_fpns:main
 
 # 停止並移除舊容器
 docker stop python-fpns-container
 docker rm python-fpns-container
 
-# 運行新容器（使用相同的 FLASK_SECRET_KEY）
+# 運行新容器測試機（使用相同的 FLASK_SECRET_KEY）
 docker run -d \
-  -p 5001:5001 \
-  --name python-fpns-container \
-  -e PUSH_API_URL="你的推播API網址" \
-  -e PUSH_API_KEY="你的API金鑰" \
+  -p 5002:5002 \
+  --name python-fpns-container-dev \
+  -e PUSH_API_URL="你的推播API測試機網址" \
+  -e PUSH_API_KEY="你的API測試機金鑰" \
   -e FLASK_SECRET_KEY="你儲存的密鑰" \
   -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:latest
+  ghcr.io/joy0130/python_fpns:dev
+```
+
+```bash
+# 運行新容器正式機（使用相同的 FLASK_SECRET_KEY）
+docker run -d \
+  -p 5001:5001 \
+  --name python-fpns-container-main \
+  -e PUSH_API_URL="你的推播API正式機網址" \
+  -e PUSH_API_KEY="你的API正式機金鑰" \
+  -e FLASK_SECRET_KEY="你儲存的密鑰" \
+  -v /var/lib/python-fpns:/app/data \
+  --restart unless-stopped \
+  ghcr.io/joy0130/python_fpns:main
 ```
 
 ### 環境變數說明
@@ -211,13 +247,16 @@ docker run -d \
 docker ps | grep python-fpns
 
 # 查看日誌
-docker logs python-fpns-container
+docker logs python-fpns-container-dev
+docker logs python-fpns-container-main
 
 # 即時追蹤日誌
-docker logs -f python-fpns-container
+docker logs -f python-fpns-container-dev
+docker logs -f python-fpns-container-main
 
 # 重啟容器
-docker restart python-fpns-container
+docker restart python-fpns-container-dev
+docker restart python-fpns-container-main
 ```
 
 完整的 Docker 部署說明請參考 [DEPLOYMENT.md](./DEPLOYMENT.md) 和 [DOCKER_UPDATE.md](./DOCKER_UPDATE.md)。

@@ -32,7 +32,7 @@ sudo docker run -d \
   -e FLASK_SECRET_KEY="env中的FLASK_SECRET_KEY" \
   -v /var/lib/python-fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:latest
+  ghcr.io/joy0130/python_fpns:dev
 ```
 
 ## ⚠️ 重要變更

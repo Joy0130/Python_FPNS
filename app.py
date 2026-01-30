@@ -638,4 +638,4 @@ def upload_file():
     return jsonify({"error": "檔案必須為excel檔"}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True,port=5001)
+    app.run(host='0.0.0.0',debug=True,port=5002)
