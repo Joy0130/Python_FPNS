@@ -31,10 +31,35 @@
 
         <div class="detail-card">
             <div class="detail-header">
-                <h1 class="detail-title">{{ record.filename }}</h1>
-                <div class="detail-meta">
-                    <span class="type-badge">{{ record.type_name }}</span>
-                    <span>🕒 {{ record.timestamp[:19].replace('T', ' ') }}</span>
+                <div class="detail-header-content">
+                    <div>
+                        <h1 class="detail-title">{{ record.filename }}</h1>
+                        <div class="detail-meta">
+                            <span class="type-badge">{{ record.type_name }}</span>
+                            
+                            <!-- 狀態徽章 -->
+                            {% if record.is_scheduled %}
+                                {% if record.status == 'pending' %}
+                                    <span class="status-badge status-pending">⏱ 待發送</span>
+                                {% elif record.status == 'completed' %}
+                                    <span class="status-badge status-completed">✓ 已推播</span>
+                                {% elif record.status == 'cancelled' %}
+                                    <span class="status-badge status-cancelled">✗ 已取消</span>
+                                {% endif %}
+                            {% endif %}
+                            
+                            <span>🕒 {{ record.timestamp[:19].replace('T', ' ') }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 取消排程按鈕 -->
+                    {% if record.is_scheduled and record.status == 'pending' %}
+                    <div class="action-buttons-header">
+                        <button class="cancel-btn" onclick="cancelSchedule('{{ record.schedule_id }}', '{{ record.filename }}')">
+                            ✕ 取消排程
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -56,6 +81,18 @@
 
             <!-- 詳細記錄表格 -->
             <h2 style="color: #333; margin-bottom: 15px;">詳細記錄</h2>
+            
+            {% if record.is_scheduled and record.status == 'cancelled' %}
+            <!-- 已取消排程的提示訊息 -->
+            <div class="cancelled-notice">
+                <div class="cancelled-notice-icon">🚫</div>
+                <div class="cancelled-notice-content">
+                    <h3>已取消推播排程</h3>
+                    <p>此排程推播已於執行前被取消，沒有實際的推播記錄。</p>
+                </div>
+            </div>
+            {% else %}
+            <!-- 正常的詳細記錄表格 -->
             <table class="details-table">
                 <thead>
                     <tr>
@@ -88,6 +125,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% endif %}
         </div>
     </div>
 
@@ -129,6 +167,67 @@
                 behavior: 'smooth'
             });
         });
+
+        // 取消排程推播
+        function cancelSchedule(scheduleId, filename) {
+            // 驗證參數
+            if (!scheduleId || scheduleId === 'None' || scheduleId === 'undefined') {
+                alert('錯誤：無法取得排程ID，請重新整理頁面後再試');
+                console.error('Invalid schedule_id:', scheduleId);
+                return;
+            }
+            
+            if (!confirm(`確定要取消「${filename}」的排程推播嗎？\n\n取消後將無法恢復。`)) {
+                return;
+            }
+            
+            console.log('取消排程:', scheduleId);
+            
+            // 發送取消請求
+            fetch(`/cancel_schedule/${scheduleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                // 先檢查HTTP狀態碼
+                if (!response.ok) {
+                    // HTTP錯誤（4xx, 5xx）
+                    return response.json().then(data => {
+                        throw new Error(data.error || `HTTP錯誤 ${response.status}`);
+                    }).catch(jsonError => {
+                        // JSON解析失敗
+                        throw new Error(`HTTP錯誤 ${response.status}`);
+                    });
+                }
+                
+                // HTTP 200-299，解析JSON
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                // 檢查業務邏輯是否成功
+                if (data.success) {
+                    // 成功：稍微延遲後跳轉回歷史記錄列表
+                    setTimeout(() => {
+                        window.location.href = '/history';
+                    }, 200);
+                } else {
+                    // 失敗：顯示錯誤訊息
+                    alert('取消失敗：' + (data.error || '未知錯誤'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // 只在真正失敗時才顯示錯誤
+                alert('取消時發生錯誤：' + error.message);
+            });
+        }
     </script>
 </body>
 </html>

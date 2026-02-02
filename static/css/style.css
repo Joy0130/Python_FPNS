@@ -451,7 +451,8 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  /* align-items: flex-start; */
+  margin-bottom: 15px;
 }
 
 .history-title {
@@ -465,12 +466,54 @@ h1 {
   font-size: 14px;
 }
 
+.history-time-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.history-time-wrapper .cancel-btn-inline {
+  margin-top: 5px;
+}
+.history-info-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;   /* 關鍵：垂直置中 */
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
 .history-info {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+/* .history-info {
   display: flex;
   gap: 30px;
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #eee;
+}
+
+.history-info-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+} */
+
+.history-info-wrapper .history-info {
+  margin: 0;
+  padding: 0;
+  border: none;
+  flex: 1;
 }
 
 .info-item {
@@ -528,6 +571,12 @@ h1 {
   color: white;
 }
 
+.status-cancelled {
+  background: #6c757d;
+  color: white;
+}
+
+
 .schedule-info {
   color: #666;
   font-size: 13px;
@@ -544,6 +593,82 @@ h1 {
   font-size: 64px;
   margin-bottom: 20px;
 }
+
+/* 操作按鈕區域 */
+.action-buttons {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+}
+
+/* 詳情頁面的操作按鈕區域 */
+.action-buttons-detail {
+  margin: 20px 0;
+  padding: 20px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+/* 標題右側的操作按鈕 */
+.action-buttons-header {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 5px;
+}
+
+
+.cancel-btn {
+  background: #ffffff;
+  color: rgb(193, 44, 44);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 1px solid rgb(193, 44, 44);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.cancel-btn:active {
+  transform: translateY(0);
+}
+
+/* 列表頁面內聯取消按鈕 */
+.cancel-btn-inline {
+  background: #ffffff;
+  color: #e67e22;
+  border: 1px solid #e67e22;
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.cancel-btn-inline:hover {
+  background: #e67e22;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(230, 126, 34, 0.3);
+}
+
+.cancel-btn-inline:active {
+  transform: translateY(0);
+}
+
 
 /* ========================================
    歷史詳情頁面樣式 (history_detail.html)
@@ -571,8 +696,13 @@ h1 {
 
 .detail-header {
   margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
 }
 
 .detail-title {
@@ -583,7 +713,8 @@ h1 {
 
 .detail-meta {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 5px;
   flex-wrap: wrap;
   color: #666;
   font-size: 14px;
@@ -849,9 +980,24 @@ body.result-page {
     gap: 10px;
   }
 
+  .history-info-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .history-info {
     flex-direction: column;
     gap: 10px;
+    width: 100%;
+  }
+
+  .action-buttons {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .cancel-btn {
+    width: 100%;
   }
 
   /* 詳情頁面響應式 */
@@ -873,4 +1019,34 @@ body.result-page {
   .result-card {
     padding: 25px;
   }
+}
+
+/* 已取消排程提示訊息 */
+.cancelled-notice {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 30px;
+  background: #f8f9fa;
+  border: 2px dashed #6c757d;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.cancelled-notice-icon {
+  font-size: 48px;
+  opacity: 0.7;
+}
+
+.cancelled-notice-content h3 {
+  color: #495057;
+  font-size: 18px;
+  margin: 0 0 8px 0;
+}
+
+.cancelled-notice-content p {
+  color: #6c757d;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
 }

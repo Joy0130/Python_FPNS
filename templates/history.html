@@ -34,23 +34,34 @@
             {% for record in records %}
             <div class="history-card" onclick="window.location.href='/history/{{ record.id }}'">
                 <div class="history-header">
-                    <div>
+                    <div class="history-title-wrapper">
                         <span class="type-badge">{{ record.type_name }}</span>
                         {% if record.is_scheduled %}
                             {% if record.status == 'pending' %}
                                 <span class="status-badge status-pending">⏱ 待發送</span>
                             {% elif record.status == 'completed' %}
                                 <span class="status-badge status-completed">✓ 已推播</span>
+                            {% elif record.status == 'cancelled' %}
+                                <span class="status-badge status-cancelled">✗ 已取消</span>
                             {% endif %}
                         {% endif %}
                         <span class="history-title">{{ record.filename }}</span>
                     </div>
-                    <div class="history-time">
-                        {% if record.is_scheduled and record.status == 'pending' %}
-                            預計發送：{{ record.scheduled_time[:16].replace('T', ' ') }}
-                        {% else %}
-                            {{ record.timestamp[:19].replace('T', ' ') }}
-                        {% endif %}
+                    <div class="history-time-wrapper">
+                        <div class="history-time">
+                            {% if record.is_scheduled and record.status == 'pending' %}
+                                預計發送：{{ record.scheduled_time[:16].replace('T', ' ') }}
+                            {% else %}
+                                {{ record.timestamp[:19].replace('T', ' ') }}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 取消排程按鈕 -->
+                        <!-- {% if record.is_scheduled and record.status == 'pending' %}
+                        <button class="cancel-btn-inline" onclick="window.location.href='/history/{{ record.id }}'">
+                            ▶ 進入取消排程
+                        </button>
+                        {% endif %} -->
                     </div>
                 </div>
                 
@@ -59,19 +70,20 @@
                     📅 排程時間：{{ record.scheduled_time[:16].replace('T', ' ') }}
                 </div>
                 {% endif %}
-
-                <div class="history-info">
-                    <div class="info-item">
-                        <span class="info-label">總計：</span>
-                        <span class="info-value value-total">{{ record.summary.total }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">成功：</span>
-                        <span class="info-value value-success">{{ record.summary.success }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">失敗：</span>
-                        <span class="info-value value-failed">{{ record.summary.failed }}</span>
+                <div class="history-info-wrapper">
+                    <div class="history-info">
+                        <div class="info-item">
+                            <span class="info-label">總計：</span>
+                            <span class="info-value value-total">{{ record.summary.total }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">成功：</span>
+                            <span class="info-value value-success">{{ record.summary.success }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">失敗：</span>
+                            <span class="info-value value-failed">{{ record.summary.failed }}</span>
+                        </div>
                     </div>
                 </div>
             </div>

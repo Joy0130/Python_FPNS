@@ -277,12 +277,49 @@ def history_detail(record_id):
         return "記錄不存在", 404
     
     record['type_name'] = get_notification_type_name(record.get('notification_type', ''))
-    
     # 排序 details：失敗的在前，成功的在後
     if 'details' in record:
         record['details'] = sorted(record['details'], key=lambda x: (x.get('success', True), x.get('employee_id', '')))
     
     return render_template('history_detail.html', record=record)
+
+@app.route('/cancel_schedule/<schedule_id>', methods=['POST'])
+def cancel_schedule(schedule_id):
+    """取消排程推播"""
+    try:
+        # 从scheduler中移除任务
+        try:
+            scheduler.remove_job(schedule_id)
+            print(f"已从scheduler移除任务: {schedule_id}")
+        except Exception as e:
+            print(f"移除scheduler任务时出错（可能已不存在）: {e}")
+        
+        # 从排程文件中移除
+        remove_scheduled_notification(schedule_id)
+        
+        # 更新历史记录状态为已取消
+        history = load_history()
+        for record in history:
+            if record.get('schedule_id') == schedule_id:
+                record['status'] = 'cancelled'
+                record['cancelled_at'] = datetime.now(TAIWAN_TZ).isoformat()
+                break
+        
+        # 保存更新后的历史记录
+        try:
+            with open('data/history.json', 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+            print(f"已更新历史记录状态: {schedule_id}")
+        except Exception as e:
+            print(f"更新历史记录失败: {e}")
+            return jsonify({"success": False, "error": "更新历史记录失败"}), 500
+        
+        return jsonify({"success": True, "message": "排程已取消"})
+    
+    except Exception as e:
+        print(f"取消排程时发生错误: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 # 發送單一推播通知的函數
 def send_notification(employee_id, amount, body_text, file_title):
