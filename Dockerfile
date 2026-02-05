@@ -25,8 +25,8 @@ RUN mkdir -p /app/data
 # 同步依賴（會自動創建虛擬環境）
 RUN uv sync --no-install-project --frozen
 
-# 開放 Flask 預設埠 5002
-EXPOSE 5002
+# 開放 Flask 預設埠 5001
+EXPOSE 5001
 
 # 啟動 Flask 應用
 CMD ["uv", "run", "python", "app.py"]
