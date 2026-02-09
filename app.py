@@ -673,6 +673,6 @@ def upload_file():
             return jsonify({"error": f"伺服器錯誤: {str(e)}"}), 500
     
     return jsonify({"error": "檔案必須為excel檔"}), 400
-
+#正式機
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=5001)
