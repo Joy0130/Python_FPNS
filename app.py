@@ -73,14 +73,14 @@ def load_scheduled_notifications():
         print(f"載入排程資料錯誤: {e}")
         return {"schedules": []}
 
-# 保存排程推播資料
+# 儲存排程推播資料
 def save_scheduled_notifications(data):
-    """保存排程推播資料"""
+    """儲存排程推播資料"""
     try:
         with open(SCHEDULED_NOTIFICATIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"保存排程資料錯誤: {e}")
+        print(f"儲存排程資料錯誤: {e}")
 
 # 新增排程推播
 def add_scheduled_notification(schedule_id, notification_type, filename, schedule_datetime, notification_tasks):
@@ -248,6 +248,24 @@ def history():
     
     return render_template('history.html', records=records)
 
+@app.route('/download_template')
+def download_template():
+    """下載推播標準格式範本"""
+    from flask import send_file
+    import os
+    template_path = os.path.join(os.getcwd(), 'data', '推播標準格式.xlsx')
+    
+    # 確保文件存在
+    if not os.path.exists(template_path):
+        return "範本文件不存在", 404
+    
+    return send_file(
+        template_path,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='推播標準格式.xlsx'
+    )
+
 @app.route('/result')
 def push_result():
     """顯示推播結果（POST-Redirect-GET 模式）"""
@@ -287,17 +305,17 @@ def history_detail(record_id):
 def cancel_schedule(schedule_id):
     """取消排程推播"""
     try:
-        # 从scheduler中移除任务
+        # 從排程中移除任務
         try:
             scheduler.remove_job(schedule_id)
-            print(f"已从scheduler移除任务: {schedule_id}")
+            print(f"已從排程中移除任務: {schedule_id}")
         except Exception as e:
-            print(f"移除scheduler任务时出错（可能已不存在）: {e}")
+            print(f"移除排程任務時出錯（可能已不存在）: {e}")
         
-        # 从排程文件中移除
+        # 從排程文件中移除
         remove_scheduled_notification(schedule_id)
         
-        # 更新历史记录状态为已取消
+        # 更新歷史紀錄狀態為已取消
         history = load_history()
         for record in history:
             if record.get('schedule_id') == schedule_id:
@@ -305,19 +323,19 @@ def cancel_schedule(schedule_id):
                 record['cancelled_at'] = datetime.now(TAIWAN_TZ).isoformat()
                 break
         
-        # 保存更新后的历史记录
+        # 更新後歷史紀錄
         try:
             with open('data/history.json', 'w', encoding='utf-8') as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
-            print(f"已更新历史记录状态: {schedule_id}")
+            print(f"已更新歷史紀錄狀態: {schedule_id}")
         except Exception as e:
-            print(f"更新历史记录失败: {e}")
-            return jsonify({"success": False, "error": "更新历史记录失败"}), 500
+            print(f"更新歷史紀錄失敗: {e}")
+            return jsonify({"success": False, "error": "更新歷史紀錄失敗"}), 500
         
         return jsonify({"success": True, "message": "排程已取消"})
     
     except Exception as e:
-        print(f"取消排程时发生错误: {e}")
+        print(f"取消排程時發生錯誤: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 

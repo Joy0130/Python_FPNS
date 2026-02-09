@@ -61,21 +61,21 @@ def save_history_record(notification_type, filename, total, success, failed, res
     if schedule_id:
         record['schedule_id'] = schedule_id
     
-    # 添加到歷史記錄
+    # 加入歷史紀錄
     history.append(record)
     
-    # 保存到文件
+    # 儲存到文件
     try:
         with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
             json.dump(history, f, ensure_ascii=False, indent=2)
-        print(f"歷史記錄已保存: ID {record['id']}")
+        print(f"歷史紀錄已儲存: ID {record['id']}")
     except Exception as e:
-        print(f"保存歷史記錄失敗: {e}")
+        print(f"儲存歷史紀錄失敗: {e}")
 
 def get_notification_type_name(notification_type):
     """獲取推播類型的中文名稱"""
     type_mapping = {
-        'btext': '福利金',
+        #'btext': '福利金',
         'etext': '教育補助',
         'ftext': '春節禮金'
     }
