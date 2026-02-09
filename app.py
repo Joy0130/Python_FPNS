@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for,send_file, abort
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
@@ -12,6 +12,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 import pytz
 from history import save_history_record, load_history, get_notification_type_name
+
 
 # config檔案設定
 # with open("config.json") as config_file:
@@ -235,12 +236,54 @@ restore_scheduled_jobs()
 def index():
     return render_template('index.html')  #讀取html檔案
 
-@app.route('/download_template')
+# 下載推播範本
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+@app.route("/download_template")
 def download_template():
-    """下載推播標準格式範本"""
-    from flask import send_file
-    template_path = os.path.join(os.getcwd(), 'data', '推播標準格式.xlsx')
-    return send_file(template_path, as_attachment=True, download_name='推播標準格式.xlsx')
+    file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
+
+    print("DOWNLOAD FILE PATH =", file_path)
+    print("EXISTS =", os.path.exists(file_path))
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name="推播標準格式.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+# @app.route("/download_template")
+# def download_template():
+#     try:
+#         # 統一使用專案內 data 目錄
+#         file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
+
+#         print(f"嘗試下載檔案: {file_path}")
+
+#         # 檔案不存在
+#         if not os.path.exists(file_path):
+#             print("檔案不存在")
+#             abort(404, "範本檔案不存在")
+
+#         # 檔案大小檢查
+#         file_size = os.path.getsize(file_path)
+#         print(f"檔案大小: {file_size} bytes")
+
+#         if file_size == 0:
+#             abort(500, "範本檔案為空")
+
+#         # 正確下載 xlsx
+#         return send_file(
+#             file_path,
+#             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+#             as_attachment=True,
+#             download_name="推播標準格式.xlsx"
+#         )
+
+#     except Exception as e:
+#         print(f"下載錯誤: {e}")
+#         abort(500, "下載失敗")
+
 
 @app.route('/history')
 def history():
@@ -294,17 +337,17 @@ def history_detail(record_id):
 def cancel_schedule(schedule_id):
     """取消排程推播"""
     try:
-        # 从scheduler中移除任务
+        # 從scheduler中移除任務
         try:
             scheduler.remove_job(schedule_id)
-            print(f"已从scheduler移除任务: {schedule_id}")
+            print(f"已從scheduler移除任務: {schedule_id}")
         except Exception as e:
-            print(f"移除scheduler任务时出错（可能已不存在）: {e}")
+            print(f"移除scheduler任務時出錯（可能已不存在）: {e}")
         
-        # 从排程文件中移除
+        # 從排程文件中移除
         remove_scheduled_notification(schedule_id)
         
-        # 更新历史记录状态为已取消
+        # 更新歷史記錄狀態為已取消
         history = load_history()
         for record in history:
             if record.get('schedule_id') == schedule_id:
@@ -312,19 +355,19 @@ def cancel_schedule(schedule_id):
                 record['cancelled_at'] = datetime.now(TAIWAN_TZ).isoformat()
                 break
         
-        # 保存更新后的历史记录
+        # 保存更新后的歷史記錄
         try:
             with open('data/history.json', 'w', encoding='utf-8') as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
-            print(f"已更新历史记录状态: {schedule_id}")
+            print(f"已更新歷史記錄狀態: {schedule_id}")
         except Exception as e:
-            print(f"更新历史记录失败: {e}")
-            return jsonify({"success": False, "error": "更新历史记录失败"}), 500
+            print(f"更新歷史記錄失敗: {e}")
+            return jsonify({"success": False, "error": "更新歷史記錄失敗"}), 500
         
         return jsonify({"success": True, "message": "排程已取消"})
     
     except Exception as e:
-        print(f"取消排程时发生错误: {e}")
+        print(f"取消排程時發生錯誤: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -438,7 +481,7 @@ def upload_file():
             
             # 驗證推播類型
             if notification_type not in text_mapping:
-                return jsonify({"error": "無效的推播類型"}), 400
+                return jsonify({"error": "無效的推播類型，請檢查excel格式"}), 400
             
             body_text = text_mapping[notification_type]
             
