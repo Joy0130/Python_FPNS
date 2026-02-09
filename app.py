@@ -235,6 +235,13 @@ restore_scheduled_jobs()
 def index():
     return render_template('index.html')  #讀取html檔案
 
+@app.route('/download_template')
+def download_template():
+    """下載推播標準格式範本"""
+    from flask import send_file
+    template_path = os.path.join(os.getcwd(), 'data', '推播標準格式.xlsx')
+    return send_file(template_path, as_attachment=True, download_name='推播標準格式.xlsx')
+
 @app.route('/history')
 def history():
     """顯示歷史記錄列表"""
@@ -424,7 +431,7 @@ def upload_file():
             
             # 定義推播內文文字
             text_mapping = {
-                "btext": "福利金已發放，您的福利金總金額為",
+                #"btext": "福利金已發放，您的福利金總金額為",
                 "etext": "教育補助費已入帳，您的教育補助費總金額為",
                 "ftext": "農曆春節禮金已發放，請至薪資帳戶查看，您的春節禮金總金額為"
             }
@@ -673,6 +680,6 @@ def upload_file():
             return jsonify({"error": f"伺服器錯誤: {str(e)}"}), 500
     
     return jsonify({"error": "檔案必須為excel檔"}), 400
-
+#測試機
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=5002)

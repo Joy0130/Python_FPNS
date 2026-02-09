@@ -23,7 +23,7 @@ body {
    導航欄樣式
    ======================================== */
 .navbar {
-  background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
+  background: linear-gradient(135deg, #0078da 0%, #0078da 100%);
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: fixed;
@@ -129,6 +129,43 @@ body {
    推播管理頁面樣式 (index.html)
    ======================================== */
 
+/* 下載範本區域 */
+.download-template-section {
+  margin: -4px auto;
+  text-align: center;
+}
+
+.download-template-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: #3282d2;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(40, 70, 167, 0.4);
+  transition: all 0.3s ease;
+}
+
+.download-template-btn:hover {
+  background: #3282d2;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(40, 70, 167, 0.4);
+}
+
+.download-template-btn:active {
+  transform: translateY(0);
+}
+
+.download-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+
 /* 檔案上傳相關 */
 .file-upload-input {
   display: none;
@@ -176,7 +213,7 @@ body {
 }
 
 .file-upload__btn:hover {
-  background: #e68a11;
+  background: #0078da;
   transform: scale(1.05);
   box-shadow: 1px 1px 10px gray;
 }
@@ -204,7 +241,7 @@ body {
   height: 80px;
   border: none;
   border-radius: 5px;
-  background: #e68a11;
+  background: #0078da;
   color: white;
   font-size: 18px;
   font-weight: bold;
@@ -215,7 +252,7 @@ body {
 }
 
 .file-upload button:hover {
-  background: #e68a11;
+  background: #004cda;
   transform: scale(1.05);
 }
 
@@ -288,7 +325,7 @@ body {
 
 .selection select:focus {
   outline: none;
-  border-color: #e68a11;
+  border-color: #004cda;
   background-color: #e9f5ff;
 }
 
@@ -313,7 +350,7 @@ body {
 .schedule-label {
   font-size: 16px;
   font-weight: bold;
-  color:rgb(255, 102, 0);
+  color: rgb(0, 94, 255);
 }
 
 /* Switch 按鈕 */
@@ -340,7 +377,7 @@ body {
   background-color: #ccc;
   transition: 0.4s;
   border-radius: 20px;
-  border: 1px solid rgb(255, 102, 0);
+  border: 1px solid rgb(0, 94, 255);
 }
 
 .slider:before {
@@ -356,11 +393,11 @@ body {
   /* border: 1px solid rgb(255, 102, 0); */
 }
 
-input:checked + .slider {
-  background-color: #e68a11;
+input:checked+.slider {
+  background-color: #004cda;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(26px);
 }
 
@@ -370,7 +407,7 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 5px;
   padding: 10px;
-  background-color: #ffc8a6a1;
+  background-color: #a6deffa1;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 300px;
@@ -386,7 +423,7 @@ input:checked + .slider:before {
 .schedule-input-group label {
   font-size: 14px;
   font-weight: bold;
-  color: rgb(255, 102, 0);
+  color: rgb(0, 106, 255);
 }
 
 .schedule-input-group input[type="date"],
@@ -477,10 +514,12 @@ h1 {
 .history-time-wrapper .cancel-btn-inline {
   margin-top: 5px;
 }
+
 .history-info-wrapper {
   display: flex;
   justify-content: space-between;
-  align-items: center;   /* 關鍵：垂直置中 */
+  align-items: center;
+  /* 關鍵：垂直置中 */
   margin-top: 15px;
   padding-top: 15px;
   border-top: 1px solid #eee;
@@ -535,9 +574,11 @@ h1 {
 .value-total {
   color: #333;
 }
+
 .value-success {
   color: #28a745;
 }
+
 .value-failed {
   color: #dc3545;
 }
@@ -747,9 +788,11 @@ h1 {
 .total {
   color: #333;
 }
+
 .success {
   color: #28a745;
 }
+
 .failed {
   color: #dc3545;
 }
@@ -939,6 +982,7 @@ body.result-page {
    響應式設計
    ======================================== */
 @media screen and (max-width: 768px) {
+
   /* 導航欄響應式 */
   .hamburger {
     display: flex;
@@ -946,20 +990,23 @@ body.result-page {
 
   .navbar-menu {
     position: fixed;
-    left: -100%; /* 左側隱藏 */
+    left: -100%;
+    /* 左側隱藏 */
     top: 70px;
     flex-direction: column;
     background: linear-gradient(135deg, #da7b00 0%, #d97706 100%);
     width: 100%;
     text-align: center;
-    transition: 0.3s; /* 動畫效果時長 */
+    transition: 0.3s;
+    /* 動畫效果時長 */
     box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
     padding: 1rem 0;
     gap: 0;
   }
 
   .navbar-menu.active {
-    left: 0; /* 開啟後在左側 */
+    left: 0;
+    /* 開啟後在左側 */
   }
 
   .navbar-item,

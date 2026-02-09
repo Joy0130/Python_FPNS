@@ -75,7 +75,7 @@ def save_history_record(notification_type, filename, total, success, failed, res
 def get_notification_type_name(notification_type):
     """獲取推播類型的中文名稱"""
     type_mapping = {
-        'btext': '福利金',
+        #'btext': '福利金',
         'etext': '教育補助',
         'ftext': '春節禮金'
     }
