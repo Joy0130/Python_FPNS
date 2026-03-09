@@ -25,8 +25,8 @@ COPY ./data /app/data
 # 驗證 data 目錄與 Excel 檔案
 RUN chmod 755 /app/data && \
     ls -la /app/data && \
-    test -f "/app/data/推播標準格式.xlsx" && \
-    test "$(wc -c < /app/data/推播標準格式.xlsx)" -gt 0
+    test -f "/app/static/推播標準格式.xlsx" && \
+    test "$(wc -c < /app/static/推播標準格式.xlsx)" -gt 0
 
 # 開放 Flask port（與你 app.py 一致）
 EXPOSE 5002

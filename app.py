@@ -241,7 +241,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @app.route("/download_template")
 def download_template():
-    file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
+    file_path = os.path.join(BASE_DIR, "static", "推播標準格式.xlsx")
 
     print("DOWNLOAD FILE PATH =", file_path)
     print("EXISTS =", os.path.exists(file_path))
@@ -256,7 +256,7 @@ def download_template():
 # def download_template():
 #     try:
 #         # 統一使用專案內 data 目錄
-#         file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
+#         file_path = os.path.join(BASE_DIR, "static", "推播標準格式.xlsx")
 
 #         print(f"嘗試下載檔案: {file_path}")
 
