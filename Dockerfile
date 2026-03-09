@@ -20,7 +20,7 @@ RUN uv sync --no-install-project --frozen
 COPY app.py history.py ./
 COPY templates ./templates
 COPY static ./static
-COPY ./data /app/data
+RUN mkdir -p /app/data
 
 # 驗證 data 目錄與 Excel 檔案
 RUN chmod 755 /app/data && \
