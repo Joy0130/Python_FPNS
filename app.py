@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for,send_file, abort
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
@@ -12,20 +12,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 import pytz
 from history import save_history_record, load_history, get_notification_type_name
-
-# config檔案設定
-# with open("config.json") as config_file:
-#     config = json.load(config_file)
-#     API_URL = config["PUSH_API_URL"]
-#     API_KEY = config["push-api-key"]
-#     if not API_URL or not API_KEY:
-#         raise ValueError("API URL or API Key is missing in config.json")
-
-# PUSH_API_URL = API_URL
-# HEADERS = {
-#     "push-api-key": API_KEY,
-#     "Content-Type": "application/json"
-# }
 
 app = Flask(__name__)
 
@@ -73,14 +59,14 @@ def load_scheduled_notifications():
         print(f"載入排程資料錯誤: {e}")
         return {"schedules": []}
 
-# 儲存排程推播資料
+# 保存排程推播資料
 def save_scheduled_notifications(data):
-    """儲存排程推播資料"""
+    """保存排程推播資料"""
     try:
         with open(SCHEDULED_NOTIFICATIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"儲存排程資料錯誤: {e}")
+        print(f"保存排程資料錯誤: {e}")
 
 # 新增排程推播
 def add_scheduled_notification(schedule_id, notification_type, filename, schedule_datetime, notification_tasks):
@@ -235,6 +221,24 @@ restore_scheduled_jobs()
 def index():
     return render_template('index.html')  #讀取html檔案
 
+# 下載推播範本
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+@app.route("/download_template")
+def download_template():
+    file_path = os.path.join(BASE_DIR, "static", "推播標準格式.xlsx")
+
+    print("DOWNLOAD FILE PATH =", file_path)
+    print("EXISTS =", os.path.exists(file_path))
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name="推播標準格式.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
 @app.route('/history')
 def history():
     """顯示歷史記錄列表"""
@@ -247,24 +251,6 @@ def history():
         record['type_name'] = get_notification_type_name(record.get('notification_type', ''))
     
     return render_template('history.html', records=records)
-
-@app.route('/download_template')
-def download_template():
-    """下載推播標準格式範本"""
-    from flask import send_file
-    import os
-    template_path = os.path.join(os.getcwd(), 'data', '推播標準格式.xlsx')
-    
-    # 確保文件存在
-    if not os.path.exists(template_path):
-        return "範本文件不存在", 404
-    
-    return send_file(
-        template_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name='推播標準格式.xlsx'
-    )
 
 @app.route('/result')
 def push_result():
@@ -305,17 +291,17 @@ def history_detail(record_id):
 def cancel_schedule(schedule_id):
     """取消排程推播"""
     try:
-        # 從排程中移除任務
+        # 從scheduler中移除任務
         try:
             scheduler.remove_job(schedule_id)
-            print(f"已從排程中移除任務: {schedule_id}")
+            print(f"已從scheduler移除任務: {schedule_id}")
         except Exception as e:
-            print(f"移除排程任務時出錯（可能已不存在）: {e}")
+            print(f"移除scheduler任務時出錯（可能已不存在）: {e}")
         
         # 從排程文件中移除
         remove_scheduled_notification(schedule_id)
         
-        # 更新歷史紀錄狀態為已取消
+        # 更新歷史記錄狀態為已取消
         history = load_history()
         for record in history:
             if record.get('schedule_id') == schedule_id:
@@ -323,14 +309,14 @@ def cancel_schedule(schedule_id):
                 record['cancelled_at'] = datetime.now(TAIWAN_TZ).isoformat()
                 break
         
-        # 更新後歷史紀錄
+        # 保存更新后的歷史記錄
         try:
             with open('data/history.json', 'w', encoding='utf-8') as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
-            print(f"已更新歷史紀錄狀態: {schedule_id}")
+            print(f"已更新歷史記錄狀態: {schedule_id}")
         except Exception as e:
-            print(f"更新歷史紀錄失敗: {e}")
-            return jsonify({"success": False, "error": "更新歷史紀錄失敗"}), 500
+            print(f"更新歷史記錄失敗: {e}")
+            return jsonify({"success": False, "error": "更新歷史記錄失敗"}), 500
         
         return jsonify({"success": True, "message": "排程已取消"})
     
@@ -442,14 +428,14 @@ def upload_file():
             
             # 定義推播內文文字
             text_mapping = {
-                "btext": "福利金已發放，您的福利金總金額為",
+                #"btext": "福利金已發放，您的福利金總金額為",
                 "etext": "教育補助費已入帳，您的教育補助費總金額為",
                 "ftext": "農曆春節禮金已發放，請至薪資帳戶查看，您的春節禮金總金額為"
             }
             
             # 驗證推播類型
             if notification_type not in text_mapping:
-                return jsonify({"error": "無效的推播類型"}), 400
+                return jsonify({"error": "無效的推播類型，請檢查excel格式"}), 400
             
             body_text = text_mapping[notification_type]
             

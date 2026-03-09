@@ -3,30 +3,33 @@ FROM python:3.12.3-alpine
 # 安裝 uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 設置工作目錄
+# 設定工作目錄
 WORKDIR /app
 
-# 複製專案配置文件
-COPY pyproject.toml uv.lock ./
-
-# 複製應用程式碼和模板
-COPY app.py ./
-COPY history.py ./
-COPY templates ./templates
-COPY static ./static
-
-# 設置環境變數
+# 環境變數（uv 建議先設）
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# 創建data目錄用於存放數據文件
-RUN mkdir -p /app/data
+# 複製依賴定義檔
+COPY pyproject.toml uv.lock ./
 
-# 同步依賴（會自動創建虛擬環境）
+# 先安裝依賴（避免程式碼變動導致 cache 失效）
 RUN uv sync --no-install-project --frozen
 
-# 開放 Flask 預設埠 5001
+# 複製應用程式碼與資源
+COPY app.py history.py ./
+COPY templates ./templates
+COPY static ./static
+RUN mkdir -p /app/data
+
+# 驗證 data 目錄與 Excel 檔案
+RUN chmod 755 /app/data && \
+    ls -la /app/data && \
+    test -f "/app/static/推播標準格式.xlsx" && \
+    test "$(wc -c < /app/static/推播標準格式.xlsx)" -gt 0
+
+# 開放 Flask port（與你 app.py 一致）
 EXPOSE 5001
 
-# 啟動 Flask 應用
+# 啟動 Flask
 CMD ["uv", "run", "python", "app.py"]
