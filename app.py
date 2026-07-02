@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for,send_file, abort
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, abort
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import wraps
 import pandas as pd
 import requests
 import os
@@ -32,6 +33,13 @@ app = Flask(__name__)
 
 # 設置 secret key 用於 session（用於 POST-Redirect-GET 模式）
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "your-secret-key-change-this-in-production")
+
+# 自動將登入使用者資訊注入所有模板
+@app.context_processor
+def inject_user():
+    return {
+        'current_user': session.get('display_name', ''),
+    }
 
 # .env 文件的路徑
 dotenv_path = os.path.join(os.getcwd(), '.env')
@@ -229,10 +237,80 @@ def restore_scheduled_jobs():
 # 應用啟動時恢復排程
 restore_scheduled_jobs()
 
+# 登入驗證裝飾器
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# keycloak相關設定
+KEYCLOAK_TOKEN_URL = "https://tkc.futsu.com.tw/realms/staff/protocol/openid-connect/token"
+KEYCLOAK_USERINFO_URL = "https://tkc.futsu.com.tw/realms/staff/protocol/openid-connect/userinfo"
+KEYCLOAK_CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID", "oauth2-proxy")
+KEYCLOAK_CLIENT_SECRET = os.getenv("KEYCLOAK_CLIENT_SECRET", "")
+
+# 登入路由
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        try:
+            # 向 Keycloak 取得 access_token
+            token_resp = requests.post(
+                KEYCLOAK_TOKEN_URL,
+                data={
+                    "grant_type": "password",
+                    "client_id": KEYCLOAK_CLIENT_ID,
+                    "client_secret": KEYCLOAK_CLIENT_SECRET,
+                    "username": username,
+                    "password": password,
+                    "scope": "openid profile",
+                },
+                timeout=10
+            )
+            if token_resp.status_code != 200:
+                error = '帳號或密碼錯誤，請重新輸入。'
+            else:
+                access_token = token_resp.json().get("access_token")
+                # 用 access_token 取得使用者資訊
+                userinfo_resp = requests.get(
+                    KEYCLOAK_USERINFO_URL,
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    timeout=10
+                )
+                userinfo = userinfo_resp.json() if userinfo_resp.status_code == 200 else {}
+                groups = userinfo.get('groups', [])
+                if 'EWC' not in groups:
+                    error = '您沒有權限存取此系統，請聯繫管理員。'
+                else:
+                    session['logged_in'] = True
+                    session['username'] = userinfo.get('preferred_username', username)
+                    session['display_name'] = userinfo.get('name', userinfo.get('given_name', username))
+                    return redirect(url_for('index'))
+        except requests.exceptions.RequestException:
+            error = '無法連線至驗證伺服器，請稍後再試。'
+    return render_template('login.html', error=error)
+
+
+@app.route('/logout')
+def logout():
+    session.clear() # 清除 session 中的登入資訊
+    return redirect(url_for('login'))
+
+
 # @app.route("/fpns")
 # @app.route("/fpns/")
 # @app.route('/fpns/index')
 @app.route('/')
+# 登入驗證裝飾器，確保只有登入使用者可以訪問首頁
+@login_required
 def index():
     return render_template('index.html')  #讀取html檔案
 
@@ -240,8 +318,9 @@ def index():
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @app.route("/download_template")
+@login_required
 def download_template():
-    file_path = os.path.join(BASE_DIR, "static", "推播標準格式.xlsx")
+    file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
 
     print("DOWNLOAD FILE PATH =", file_path)
     print("EXISTS =", os.path.exists(file_path))
@@ -256,7 +335,7 @@ def download_template():
 # def download_template():
 #     try:
 #         # 統一使用專案內 data 目錄
-#         file_path = os.path.join(BASE_DIR, "static", "推播標準格式.xlsx")
+#         file_path = os.path.join(BASE_DIR, "data", "推播標準格式.xlsx")
 
 #         print(f"嘗試下載檔案: {file_path}")
 
@@ -286,6 +365,7 @@ def download_template():
 
 
 @app.route('/history')
+@login_required
 def history():
     """顯示歷史記錄列表"""
     records = load_history()
@@ -299,6 +379,7 @@ def history():
     return render_template('history.html', records=records)
 
 @app.route('/result')
+@login_required
 def push_result():
     """顯示推播結果（POST-Redirect-GET 模式）"""
     result_data = session.pop('push_result', None)
@@ -318,6 +399,7 @@ def push_result():
     )
 
 @app.route('/history/<int:record_id>')
+@login_required
 def history_detail(record_id):
     """顯示單一記錄的詳細資訊"""
     records = load_history()
@@ -334,6 +416,7 @@ def history_detail(record_id):
     return render_template('history_detail.html', record=record)
 
 @app.route('/cancel_schedule/<schedule_id>', methods=['POST'])
+@login_required
 def cancel_schedule(schedule_id):
     """取消排程推播"""
     try:
@@ -449,6 +532,7 @@ def send_notification(employee_id, amount, body_text, file_title):
 
 # 上傳excel檔案
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_file():
     print(request.form)
     if 'file' not in request.files:
@@ -622,6 +706,7 @@ def upload_file():
                         'timestamp': datetime.now(TAIWAN_TZ).isoformat(),
                         'notification_type': notification_type,
                         'filename': file.filename,
+                        'operator_name': session.get('display_name', ''),
                         'is_scheduled': True,
                         'scheduled_time': schedule_datetime.isoformat(),
                         'status': 'pending',
@@ -701,7 +786,8 @@ def upload_file():
                     total=len(responses),
                     success=success_count,
                     failed=fail_count,
-                    responses=responses
+                    responses=responses,
+                    operator_name=session.get('display_name', '')
                 )
                 
                 # 使用 session 保存推播結果，然後重定向（POST-Redirect-GET 模式）

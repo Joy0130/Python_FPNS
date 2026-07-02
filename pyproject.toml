@@ -1,5 +1,5 @@
 [project]
-name = "python-fpns"
+name = "fpns"
 version = "0.1.0"
 description = "Flask Push Notification System"
 requires-python = ">=3.10"

@@ -1,28 +1,16 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>推播結果</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <!-- 導航欄 →
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-logo">
-                <span>📢</span>
-                <span>福委會推播系統</span>
-            </a>
-        </div>
-    </nav>
+{% extends "layout.html" %}
 
+{% block title %}推播結果{% endblock %}
+
+{% block body_class %} class="result-page"{% endblock %}
+
+{% block content %}
     <div class="container">
         <div class="result-card">
             <div class="result-header">
                 <div class="success-icon">
                     {% if summary.get('scheduled') %}
-                        📅
+                        🗓️
                     {% elif summary.failed == 0 %}
                         ✅
                     {% elif summary.success > 0 %}
@@ -75,7 +63,6 @@
                 <h2>詳細記錄</h2>
                 <button class="toggle-btn" onclick="toggleDetails()">顯示/隱藏</button>
             </div>
-
             <div class="details-content" id="detailsContent">
                 <table class="details-table">
                     <thead>
@@ -112,12 +99,13 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        function toggleDetails() {
-            const content = document.getElementById('detailsContent');
-            content.classList.toggle('hidden');
-        }
-    </script>
-</body>
-</html>
+{% block scripts %}
+<script>
+    function toggleDetails() {
+        const content = document.getElementById('detailsContent');
+        content.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

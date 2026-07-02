@@ -1,34 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>推播歷史記錄測試機</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block title %}推播歷史記錄{% endblock %}
 
-</head>
-
-<body>
-    <!-- 導航欄 -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-logo">
-                <span>📢</span>
-                <span>推播系統-測試機</span>
-            </a>
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <ul class="navbar-menu" id="navbar-menu">
-                <li><a href="/" class="navbar-link">推播管理</a></li>
-                <li><a href="/history" class="navbar-link active">歷史記錄</a></li>
-            </ul>
-        </div>
-    </nav>
-
+{% block content %}
     <div class="container">
         <h1>📋 推播歷史記錄</h1>
 
@@ -57,13 +31,6 @@
                         {{ record.timestamp[:19].replace('T', ' ') }}
                         {% endif %}
                     </div>
-
-                    <!-- 取消排程按鈕 -->
-                    <!-- {% if record.is_scheduled and record.status == 'pending' %}
-                        <button class="cancel-btn-inline" onclick="window.location.href='/history/{{ record.id }}'">
-                            ▶ 進入取消排程
-                        </button>
-                        {% endif %} -->
                 </div>
             </div>
 
@@ -86,6 +53,12 @@
                         <span class="info-label">失敗：</span>
                         <span class="info-value value-failed">{{ record.summary.failed }}</span>
                     </div>
+                    {% if record.operator_name %}
+                    <div class="info-item">
+                        <span class="info-label">發送者：</span>
+                        <span class="info-value">{{ record.operator_name }}</span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -97,23 +70,4 @@
         </div>
         {% endif %}
     </div>
-
-    <script>
-        // 漢堡選單切換
-        const hamburger = document.getElementById('hamburger');
-        const navbarMenu = document.getElementById('navbar-menu');
-
-        hamburger.addEventListener('click', function () {
-            navbarMenu.classList.toggle('active');
-        });
-
-        // 點擊菜單項後自動關閉菜單
-        document.querySelectorAll('.navbar-link').forEach(link => {
-            link.addEventListener('click', function () {
-                navbarMenu.classList.remove('active');
-            });
-        });
-    </script>
-</body>
-
-</html>
+{% endblock %}

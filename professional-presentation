@@ -1,0 +1,238 @@
+---
+name: professional-presentation
+description: >
+  Generate professional, visually compelling presentation decks from scratch or based on user-provided topics, outlines, or documents.
+  Use this skill whenever the user wants to: create a pitch deck, business presentation, product demo, investor deck, training material, or any slides that need to look polished and professional.
+  Also trigger when the user says things like "幫我做簡報", "幫我製作投影片", "生成簡報", "make me a deck", "build slides", "create a presentation on X", "turn this into a presentation", "I need slides for X", or whenever they want to present information visually.
+  This skill handles both CONTENT (what to say) and DESIGN (how it looks) — use it even when the user only specifies a topic and no structure yet.
+---
+
+# Professional Presentation Skill
+
+## Overview
+
+This skill creates polished, professional presentations end-to-end:
+1. **Content Architecture** — Build a compelling narrative and slide structure
+2. **Visual Design** — Apply design principles for maximum impact
+3. **File Generation** — Produce a downloadable `.pptx` file via pptxgenjs
+
+Always read **[pptx SKILL.md](/mnt/skills/public/pptx/SKILL.md)** for technical implementation details.
+
+---
+
+## Step 1: Understand the Brief
+
+Before building anything, gather:
+
+| Question | Why it matters |
+|----------|---------------|
+| What is the topic / goal? | Shapes narrative arc |
+| Who is the audience? | Determines tone, depth, jargon level |
+| How many slides? | Default: 8–12 unless specified |
+| What type of deck? | See deck types below |
+| Any existing content? | Documents, data, bullet points to incorporate |
+| Preferred language? | Match user's language (預設請使用繁體中文, 特殊專業術語或程式語言請使用English, etc.) |
+
+If the user hasn't specified, make smart assumptions and proceed — don't over-ask.
+
+### Deck Types
+
+| Type | Structure Focus |
+|------|----------------|
+| **Pitch / Investor Deck** | Problem → Solution → Market → Traction → Ask |
+| **Business Proposal** | Executive Summary → Problem → Approach → Timeline → Cost |
+| **Product Demo** | Hook → Pain Point → Demo Flow → Benefits → CTA |
+| **Training / Educational** | Objectives → Concepts → Examples → Practice → Summary |
+| **Status / Report** | Executive Summary → KPIs → Progress → Risks → Next Steps |
+| **Conference / Talk** | Hook → Story → Key Points → Evidence → Takeaway |
+
+---
+
+## Step 2: Design the Content Architecture
+
+### Slide Structure Template
+
+Every deck should follow this narrative shape:
+
+```
+1. TITLE SLIDE — Deck name, presenter, date/context
+2. AGENDA / OVERVIEW — What we'll cover (optional for short decks)
+3–N. BODY SLIDES — Core content (varies by deck type)
+N-1. SUMMARY / KEY TAKEAWAYS — Distill main points
+N. CTA / NEXT STEPS — What happens next, or Q&A
+```
+
+### Per-Slide Blueprint
+
+For each slide, define:
+- **Headline**: A single declarative sentence (not a label). E.g., "Revenue grew 40% YoY" not "Revenue"
+- **Key Point**: 1–3 supporting bullets maximum
+- **Visual**: Chart, image, icon cluster, stat callout — never text-only
+- **Speaker Notes**: 2–4 sentences the presenter can use
+
+### Content Principles
+
+- **One idea per slide** — if you need a comma in the title, split it
+- **Headlines tell the story** — reading only headlines should convey the full narrative
+- **Show, don't list** — replace bullet lists with visuals wherever possible
+- **Data beats claims** — back assertions with numbers when possible
+
+---
+
+## Step 3: Apply Visual Design
+
+Read the Design section in [pptx SKILL.md](/mnt/skills/public/pptx/SKILL.md) for full palette and typography options.
+
+### Quick Design Decisions
+
+**Pick a theme that matches the context:**
+
+| Context | Recommended Theme | Feel |
+|---------|------------------|------|
+| Tech / Startup | Midnight Executive or Ocean Gradient | Modern, bold |
+| Finance / Consulting | Charcoal Minimal or Midnight Executive | Authoritative |
+| Healthcare / Education | Teal Trust or Sage Calm | Trustworthy |
+| Creative / Marketing | Coral Energy or Berry & Cream | Energetic |
+| Sustainability / NGO | Forest & Moss or Sage Calm | Organic |
+
+**Layout variety rule — never repeat the same layout twice in a row:**
+
+| Slide Content | Suggested Layout |
+|---------------|-----------------|
+| Key stat / metric | Giant number callout (60-72pt) + small label |
+| Comparison | Two-column split |
+| Process / Steps | Numbered horizontal flow |
+| List of features/benefits | Icon grid (2×2 or 2×3) |
+| Quote / Testimonial | Full-bleed accent color + large italic text |
+| Data | Chart with annotation callout |
+| Image-heavy | Half-bleed photo + content overlay |
+
+---
+
+## Step 4: Generate the File
+
+Use **pptxgenjs** to produce the `.pptx` file. Read [pptxgenjs.md](/mnt/skills/public/pptx/pptxgenjs.md) for the full API reference.
+
+### Quickstart Pattern
+
+```bash
+# Install if needed
+npm install -g pptxgenjs
+
+# Write and run the generation script
+node generate-deck.js
+```
+
+### Code Structure
+
+```javascript
+const pptx = require('pptxgenjs');
+const pres = new pptx();
+
+// 1. Set global theme
+pres.layout = 'LAYOUT_WIDE';
+pres.theme = { headFontFace: 'Georgia', bodyFontFace: 'Calibri' };
+
+// 2. Define reusable styles
+const COLORS = {
+  primary: '1E2761',
+  secondary: 'CADCFC',
+  accent: 'FFFFFF',
+  dark: '0D1B4B',
+  text: 'F0F4FF'
+};
+
+// 3. Add slides
+// Title slide
+let slide = pres.addSlide();
+slide.background = { color: COLORS.primary };
+slide.addText('Presentation Title', {
+  x: 0.5, y: 2.5, w: 9, h: 1.2,
+  fontSize: 44, bold: true, color: COLORS.accent,
+  fontFace: 'Georgia'
+});
+
+// ... add more slides ...
+
+// 4. Save
+pres.writeFile({ fileName: 'output/presentation.pptx' });
+```
+
+### Key pptxgenjs Patterns
+
+**Stat Callout Slide:**
+```javascript
+slide.addText('40%', { x: 2, y: 1.5, w: 6, h: 2, fontSize: 80, bold: true, color: COLORS.accent, align: 'center' });
+slide.addText('Year-over-Year Revenue Growth', { x: 1, y: 3.8, w: 8, h: 0.5, fontSize: 18, color: COLORS.secondary, align: 'center' });
+```
+
+**Icon Grid (using emoji as placeholder icons):**
+```javascript
+const items = [
+  { icon: '🚀', title: 'Speed', desc: 'Deploy in minutes' },
+  { icon: '🔒', title: 'Security', desc: 'Enterprise grade' },
+  // ...
+];
+items.forEach((item, i) => {
+  const col = i % 2, row = Math.floor(i / 2);
+  const x = 0.5 + col * 4.75, y = 1.5 + row * 2;
+  slide.addText(item.icon, { x, y, w: 0.8, h: 0.8, fontSize: 32 });
+  slide.addText(item.title, { x: x + 0.9, y, w: 3.5, h: 0.4, fontSize: 16, bold: true, color: COLORS.primary });
+  slide.addText(item.desc, { x: x + 0.9, y: y + 0.45, w: 3.5, h: 0.4, fontSize: 13, color: '444444' });
+});
+```
+
+**Two-Column Layout:**
+```javascript
+// Left column
+slide.addShape(pres.ShapeType.rect, { x: 0, y: 0.9, w: 4.8, h: 6.1, fill: { color: COLORS.primary } });
+slide.addText(leftContent, { x: 0.3, y: 1.2, w: 4.2, h: 5.5, fontSize: 14, color: COLORS.accent });
+// Right column
+slide.addText(rightContent, { x: 5.2, y: 1.2, w: 4.3, h: 5.5, fontSize: 14, color: '333333' });
+```
+
+---
+
+## Step 5: QA
+
+After generating, always run visual QA. See the QA section in [pptx SKILL.md](/mnt/skills/public/pptx/SKILL.md).
+
+**Minimum checks:**
+1. Extract text: `python -m markitdown output.pptx` — verify all content is present
+2. Convert to images and inspect each slide visually
+3. Confirm no text overflow, overlapping elements, or missing slides
+
+---
+
+## Slide Count Guidelines
+
+| Deck Purpose | Recommended Slides |
+|-------------|-------------------|
+| Quick update / status | 5–7 |
+| Standard business presentation | 8–12 |
+| Investor / Pitch deck | 10–15 |
+| Full proposal / report | 15–25 |
+| Training module | 20–30 |
+
+---
+
+## Speaker Notes Best Practices
+
+Add speaker notes to every content slide:
+```javascript
+slide.addNotes(`Key message: [what the speaker should emphasize]
+Talking point 1: [supporting detail]
+Talking point 2: [supporting detail]
+Transition: [how to move to next slide]`);
+```
+
+---
+
+## Output
+
+Save the final file to `/Documents/presentation.pptx` and present it with `present_files`.
+
+Always confirm to the user:
+- Number of slides generated
+- Color theme used
+- Offer to adjust content, design, or add/remove slides

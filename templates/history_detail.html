@@ -1,33 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>推播詳情 - {{ record.filename }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+{% block title %}推播詳情 - {{ record.filename }}{% endblock %}
 
-<body>
-    <!-- 導航欄 -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="/" class="navbar-logo">
-                <span>📢</span>
-                <span>福委會推播系統</span>
-            </a>
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <ul class="navbar-menu" id="navbar-menu">
-                <li><a href="/" class="navbar-link">推播管理</a></li>
-                <li><a href="/history" class="navbar-link active">歷史記錄</a></li>
-            </ul>
-        </div>
-    </nav>
-
+{% block content %}
     <div class="container">
         <a href="/history" class="back-btn">← 返回列表</a>
 
@@ -41,24 +16,26 @@
 
                             <!-- 狀態徽章 -->
                             {% if record.is_scheduled %}
-                            {% if record.status == 'pending' %}
-                            <span class="status-badge status-pending">⏱ 待發送</span>
-                            {% elif record.status == 'completed' %}
-                            <span class="status-badge status-completed">✓ 已推播</span>
-                            {% elif record.status == 'cancelled' %}
-                            <span class="status-badge status-cancelled">✗ 已取消</span>
-                            {% endif %}
+                                {% if record.status == 'pending' %}
+                                    <span class="status-badge status-pending">⏱ 待發送</span>
+                                {% elif record.status == 'completed' %}
+                                    <span class="status-badge status-completed">✓ 已推播</span>
+                                {% elif record.status == 'cancelled' %}
+                                    <span class="status-badge status-cancelled">✗ 已取消</span>
+                                {% endif %}
                             {% endif %}
 
                             <span>🕒 {{ record.timestamp[:19].replace('T', ' ') }}</span>
+                            {% if record.operator_name %}
+                            <span>👤 {{ record.operator_name }}</span>
+                            {% endif %}
                         </div>
                     </div>
 
                     <!-- 取消排程按鈕 -->
                     {% if record.is_scheduled and record.status == 'pending' %}
                     <div class="action-buttons-header">
-                        <button class="cancel-btn"
-                            onclick="cancelSchedule('{{ record.schedule_id }}', '{{ record.filename }}')">
+                        <button class="cancel-btn" onclick="cancelSchedule('{{ record.schedule_id }}', '{{ record.filename }}')">
                             ✕ 取消排程
                         </button>
                     </div>
@@ -86,7 +63,6 @@
             <h2 style="color: #333; margin-bottom: 15px;">詳細記錄</h2>
 
             {% if record.is_scheduled and record.status == 'cancelled' %}
-            <!-- 已取消排程的提示訊息 -->
             <div class="cancelled-notice">
                 <div class="cancelled-notice-icon">🚫</div>
                 <div class="cancelled-notice-content">
@@ -95,7 +71,6 @@
                 </div>
             </div>
             {% else %}
-            <!-- 正常的詳細記錄表格 -->
             <table class="details-table">
                 <thead>
                     <tr>
@@ -114,14 +89,14 @@
                         <td>{{ detail.status_code }}</td>
                         <td>
                             {% if detail.success %}
-                            <span class="status-badge badge-success">✓ 成功</span>
+                                <span class="status-badge badge-success">✓ 成功</span>
                             {% else %}
-                            <span class="status-badge badge-failed">✗ 失敗</span>
+                                <span class="status-badge badge-failed">✗ 失敗</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if detail.error %}
-                            <div class="error-msg">{{ detail.error }}</div>
+                                <div class="error-msg">{{ detail.error }}</div>
                             {% endif %}
                         </td>
                     </tr>
@@ -134,104 +109,56 @@
 
     <!-- 回到頂部按鈕 -->
     <button class="back-to-top" id="backToTop" title="回到最上面"></button>
+{% endblock %}
 
-    <script>
-        // 漢堡選單切換
-        const hamburger = document.getElementById('hamburger');
-        const navbarMenu = document.getElementById('navbar-menu');
+{% block scripts %}
+<script>
+    // 回到頂部按鈕功能
+    const backToTopBtn = document.getElementById('backToTop');
 
-        hamburger.addEventListener('click', function () {
-            navbarMenu.classList.toggle('active');
-        });
-
-        // 點擊菜單項後自動關閉菜單
-        document.querySelectorAll('.navbar-link').forEach(link => {
-            link.addEventListener('click', function () {
-                navbarMenu.classList.remove('active');
-            });
-        });
-
-        // 回到頂部按鈕功能
-        const backToTopBtn = document.getElementById('backToTop');
-
-        // 監聽滾動事件
-        window.addEventListener('scroll', function () {
-            if (window.pageYOffset > 300) {
-                backToTopBtn.classList.add('show');
-            } else {
-                backToTopBtn.classList.remove('show');
-            }
-        });
-
-        // 點擊按鈕回到頂部
-        backToTopBtn.addEventListener('click', function () {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // 取消排程推播
-        function cancelSchedule(scheduleId, filename) {
-            // 驗證參數
-            if (!scheduleId || scheduleId === 'None' || scheduleId === 'undefined') {
-                alert('錯誤：無法取得排程ID，請重新整理頁面後再試');
-                console.error('Invalid schedule_id:', scheduleId);
-                return;
-            }
-
-            if (!confirm(`確定要取消「${filename}」的排程推播嗎？\n\n取消後將無法恢復。`)) {
-                return;
-            }
-
-            console.log('取消排程:', scheduleId);
-
-            // 發送取消請求
-            fetch(`/cancel_schedule/${scheduleId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response ok:', response.ok);
-
-                    // 先檢查HTTP狀態碼
-                    if (!response.ok) {
-                        // HTTP錯誤（4xx, 5xx）
-                        return response.json().then(data => {
-                            throw new Error(data.error || `HTTP錯誤 ${response.status}`);
-                        }).catch(jsonError => {
-                            // JSON解析失敗
-                            throw new Error(`HTTP錯誤 ${response.status}`);
-                        });
-                    }
-
-                    // HTTP 200-299，解析JSON
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Response data:', data);
-
-                    // 檢查業務邏輯是否成功
-                    if (data.success) {
-                        // 成功：稍微延遲後跳轉回歷史記錄列表
-                        setTimeout(() => {
-                            window.location.href = '/history';
-                        }, 200);
-                    } else {
-                        // 失敗：顯示錯誤訊息
-                        alert('取消失敗：' + (data.error || '未知錯誤'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // 只在真正失敗時才顯示錯誤
-                    alert('取消時發生錯誤：' + error.message);
-                });
+    window.addEventListener('scroll', function () {
+        if (window.pageYOffset > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
         }
-    </script>
-</body>
+    });
 
-</html>
+    backToTopBtn.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // 取消排程推播
+    function cancelSchedule(scheduleId, filename) {
+        if (!scheduleId || scheduleId === 'None' || scheduleId === 'undefined') {
+            alert('錯誤：無法取得排程ID，請重新整理頁面後再試');
+            return;
+        }
+        if (!confirm(`確定要取消「${filename}」的排程推播嗎？\n\n取消後將無法恢復。`)) {
+            return;
+        }
+        fetch(`/cancel_schedule/${scheduleId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || `HTTP錯誤 ${response.status}`);
+                }).catch(() => { throw new Error(`HTTP錯誤 ${response.status}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                setTimeout(() => { window.location.href = '/history'; }, 200);
+            } else {
+                alert('取消失敗：' + (data.error || '未知錯誤'));
+            }
+        })
+        .catch(error => {
+            alert('取消時發生錯誤：' + error.message);
+        });
+    }
+</script>
+{% endblock %}

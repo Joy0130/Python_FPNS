@@ -19,3 +19,4 @@ build/
 #data
 /data/history.json
 /data/scheduled_notifications.json
+CLAUDE.md

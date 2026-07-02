@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}福委會推播系統(測試機){% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body{% block body_class %}{% endblock %}>
+
+    <!-- 導航欄 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <a href="/" class="navbar-logo">
+                    <span>📢</span>
+                    <span>福委會推播系統(測試機)</span>
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="navbar-menu" id="navbar-menu">
+                <li class="navbar-item">
+                    <a href="/" class="navbar-link{% if request.endpoint == 'index' %} active{% endif %}">推播管理</a>
+                </li>
+                <li class="navbar-item">
+                    <a href="/history" class="navbar-link{% if request.endpoint in ['history', 'history_detail'] %} active{% endif %}">歷史記錄</a>
+                </li>
+                <li class="navbar-item navbar-user-item">
+                    {% if current_user %}<span class="navbar-user">👋 {{ current_user }}</span>{% endif %}
+                    <a href="/logout" class="navbar-link navbar-logout">登出</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <script>
+        // 漢堡選單切換
+        const hamburger = document.getElementById('hamburger');
+        const navbarMenu = document.getElementById('navbar-menu');
+
+        hamburger.addEventListener('click', function () {
+            navbarMenu.classList.toggle('active');
+        });
+
+        // 點擊菜單項後自動關閉菜單
+        document.querySelectorAll('.navbar-link').forEach(link => {
+            link.addEventListener('click', function () {
+                navbarMenu.classList.remove('active');
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

@@ -30,19 +30,20 @@ def load_history():
         print(f"載入歷史記錄失敗: {e}")
         return []
 
-def save_history_record(notification_type, filename, total, success, failed, responses, is_scheduled=False, scheduled_time=None, schedule_id=None):
+def save_history_record(notification_type, filename, total, success, failed, responses, is_scheduled=False, scheduled_time=None, schedule_id=None, operator_name=None):
     """保存推播歷史記錄"""
     ensure_data_directory()
-    
+
     # 載入現有記錄
     history = load_history()
-    
+
     # 創建新記錄
     record = {
         'id': len(history) + 1,
         'timestamp': datetime.now(TAIWAN_TZ).isoformat(),
         'notification_type': notification_type,
         'filename': filename,
+        'operator_name': operator_name or '',
         'is_scheduled': is_scheduled,
         'summary': {
             'total': total,

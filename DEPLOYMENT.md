@@ -12,23 +12,23 @@
 
 - 構建 Docker 映像
 - 推送到 GitHub Container Registry (GHCR)
-- 映像路徑：`ghcr.io/joy0130/python_fpns:latest`
+- 映像路徑：`ghcr.io/futsumis/fpns:latest`
 
 #### 2. **設置映像為公開（首次需要）**
 
 1. 前往 GitHub 個人主頁
 2. 點擊 "Packages" 標籤
-3. 找到 `python_fpns` 套件
+3. 找到 `fpns` 套件
 4. 點擊 "Package settings"
 5. 在 "Danger Zone" 將 visibility 改為 Public（如果需要公開存取）
 
 #### 3. **在 Ubuntu 伺服器上部署**
 
-SSH 連接到您的 Ubuntu 伺服器（joylinux.futsu.com.tw），然後執行：
+SSH 連接到您的 Ubuntu 伺服器（tk8s-ubuntu-master.futsu.com.tw），然後執行：
 
 ```bash
 # 拉取最新映像（如果是公開的則不需要登入）
-docker pull ghcr.io/joy0130/python_fpns:latest
+docker pull ghcr.io/futsumis/fpns:latest
 
 # 停止並移除舊容器（如果存在）
 docker stop python-fpns-container 2>/dev/null || true
@@ -37,32 +37,32 @@ docker rm python-fpns-container 2>/dev/null || true
 # 運行新容器
 sudo docker run -d \
   -p 5001:5001 \
-  --name python-fpns-container \
+  --name fpns-container \
   -e PUSH_API_URL="你的推播API網址" \
   -e PUSH_API_KEY="你的API金鑰" \
   -e FLASK_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(32))')" \
-  -v /var/lib/python-fpns:/app/data \
+  -v /var/lib/fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:latest
+  ghcr.io/futsumis/fpns:latest
 ```
 
 > **重要說明：**
 >
 > - `-e FLASK_SECRET_KEY=...` 用於加密 session，**請保存生成的密鑰**
-> - `-v /var/lib/python-fpns:/app/data` 掛載資料目錄，存儲歷史記錄
+> - `-v /var/lib/fpns:/app/data` 掛載資料目錄，存儲歷史記錄
 > - 更新部署時請使用**相同的 FLASK_SECRET_KEY**
 
 #### 4. **檢查容器狀態**
 
 ```bash
 # 查看容器運行狀態
-docker ps | grep python-fpns
+docker ps | grep fpns
 
 # 查看容器日誌
-docker logs python-fpns-container
+docker logs fpns-container
 
 # 即時追蹤日誌
-docker logs -f python-fpns-container
+docker logs -f fpns-container
 ```
 
 ---
@@ -73,7 +73,7 @@ docker logs -f python-fpns-container
 
 ```bash
 # 登入 GHCR（需要 Personal Access Token）
-echo $GITHUB_TOKEN | docker login ghcr.io -u Joy0130 --password-stdin
+echo $GITHUB_TOKEN | docker login ghcr.io -u futsumis --password-stdin
 
 # 構建並推送到 GHCR
 ./build-docker.sh ghcr
@@ -91,15 +91,15 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u Joy0130 --password-stdin
 
 ```bash
 # 在伺服器上
-docker pull nas-tvm.futsu.com.tw:9999/python-fpns:latest
+docker pull nas-tvm.futsu.com.tw:9999/fpns:latest
 
 sudo docker run -d \
   -p 5001:5001 \
-  --name python-fpns-container \
+  --name fpns-container \
   -e PUSH_API_URL="你的推播API網址" \
   -e PUSH_API_KEY="你的API金鑰" \
   --restart unless-stopped \
-  nas-tvm.futsu.com.tw:9999/python-fpns:latest
+  nas-tvm.futsu.com.tw:9999/fpns:latest
 ```
 
 ---
@@ -117,20 +117,20 @@ sudo docker run -d \
 
 ```bash
 # 拉取最新映像
-docker pull ghcr.io/joy0130/python_fpns:latest
+docker pull ghcr.io/futsumis/fpns:latest
 
 # 重新啟動容器
-docker stop python-fpns-container
-docker rm python-fpns-container
+docker stop fpns-container
+docker rm fpns-container
 sudo docker run -d \
   -p 5001:5001 \
-  --name python-fpns-container \
+  --name fpns-container \
   -e PUSH_API_URL="你的推播API網址" \
   -e PUSH_API_KEY="你的API金鑰" \
   -e FLASK_SECRET_KEY="你儲存的密鑰" \
-  -v /var/lib/python-fpns:/app/data \
+  -v /var/lib/fpns:/app/data \
   --restart unless-stopped \
-  ghcr.io/joy0130/python_fpns:dev
+  ghcr.io/futsumis/fpns:dev
 ```
 
 > **提醒**: 更新時請使用首次部署時保存的 FLASK_SECRET_KEY
@@ -165,26 +165,26 @@ python3 -c 'import secrets; print(secrets.token_hex(32))'
 
 ```bash
 # 檢查容器是否運行
-docker ps | grep python-fpns
+docker ps | grep fpns
 
 # 查看資源使用情況
-docker stats python-fpns-container
+docker stats fpns-container
 ```
 
 ### 查看日誌
 
 ```bash
 # 查看最後 100 行日誌
-docker logs --tail 100 python-fpns-container
+docker logs --tail 100 fpns-container
 
 # 即時追蹤日誌
-docker logs -f python-fpns-container
+docker logs -f fpns-container
 ```
 
 ### 重啟容器
 
 ```bash
-docker restart python-fpns-container
+docker restart fpns-container
 ```
 
 ---
@@ -193,7 +193,7 @@ docker restart python-fpns-container
 
 ### 容器無法啟動
 
-1. 檢查日誌：`docker logs python-fpns-container`
+1. 檢查日誌：`docker logs fpns-container`
 2. 確認環境變數是否正確設置
 3. 確認端口 5001 沒有被其他服務佔用
 
@@ -202,7 +202,7 @@ docker restart python-fpns-container
 1. 檢查網絡連接
 2. 如果是私有映像，確保已登入 GHCR：
    ```bash
-   echo $GITHUB_TOKEN | docker login ghcr.io -u Joy0130 --password-stdin
+   echo $GITHUB_TOKEN | docker login ghcr.io -u futsumis --password-stdin
    ```
 
 ### 應用程式錯誤
@@ -217,13 +217,7 @@ docker restart python-fpns-container
 
 部署成功後，可以透過以下方式訪問：
 
-- **本地訪問**：`http://localhost:5001`
-- **遠程訪問**：`http://joylinux.futsu.com.tw:5001`
+- **本地訪問**：`http://localhost:5002`
+- **遠程訪問**：`http://tk8s-ubuntu-master.futsu.com.tw:5002`
 
 ---
-
-## 🔗 相關鏈接
-
-- **GitHub Repository**: https://github.com/Joy0130/Python_FPNS
-- **GitHub Container Registry**: https://github.com/Joy0130/Python_FPNS/pkgs/container/python_fpns
-- **Docker Hub UV**: https://github.com/astral-sh/uv

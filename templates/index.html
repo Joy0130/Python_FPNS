@@ -1,49 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "layout.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>推播管理測試機</title>
+{% block title %}推播管理{% endblock %}
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-</head>
-
-<body>
-
-    <!-- 導航欄 -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="navbar-brand">
-                <a href="/" class="navbar-logo">
-                    <span>📢</span>
-                    <span>推播系統-測試機</span>
-                </a>
-            </div>
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <ul class="navbar-menu" id="navbar-menu">
-                <li class="navbar-item">
-                    <a href="/" class="navbar-link active">推播管理</a>
-                </li>
-                <li class="navbar-item">
-                    <a href="/history" class="navbar-link">歷史記錄</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
+{% block content %}
     <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="return validateAndSubmit();">
 
         <!-- 新增下拉式選單 -->
         <div class="selection">
+            <div class="warning-notice">⚠ 注意：此為測試網頁會將推播發送到App測試機中，正式發送請改用正式網頁</div>
             <label for="notification_type">* 選擇推播類型：</label>
             <select name="notification_type" id="notification_type">
-                <option value="">-- 請選擇 --</option> <!-- 預設空白選項 -->
+                <option value="">-- 請選擇 --</option>
                 <!-- <option value="btext">福利金</option> -->
                 <option value="etext">教育補助</option>
                 <option value="ftext">春節禮金</option>
@@ -95,10 +62,8 @@
                 <img class="image" src="{{ url_for('static', filename='images/file.svg') }}" alt="image" />
             </div>
 
-
             <div class="file-upload">
                 <button type="submit">發送推播</button>
-
             </div>
         </div>
     </form>
@@ -108,147 +73,109 @@
         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 10000; justify-content: center; align-items: center;">
         <img class="loading-img" src="{{ url_for('static', filename='images/loading1.gif') }}" alt="發送中...請稍後" />
     </div>
+{% endblock %}
 
-    <script>
-        // 漢堡選單切換
-        const hamburger = document.getElementById('hamburger');
-        const navbarMenu = document.getElementById('navbar-menu');
+{% block scripts %}
+<script>
+    const fileInput = document.querySelector(".file-upload-input");
+    const fileNameZone = document.querySelector(".file-upload__name");
+    const scheduleToggle = document.getElementById("schedule_toggle");
+    const scheduleFields = document.getElementById("schedule_fields");
+    const scheduleDateInput = document.getElementById("schedule_date");
+    const scheduleTimeInput = document.getElementById("schedule_time");
 
-        hamburger.addEventListener('click', function () {
-            navbarMenu.classList.toggle('active');
-        });
+    // 設定日期和時間的最小值（當前時間）
+    function setMinDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${year}-${month}-${day}`;
+        scheduleDateInput.min = todayStr;
 
-        // 點擊菜單項後自動關閉菜單
-        document.querySelectorAll('.navbar-link').forEach(link => {
-            link.addEventListener('click', function () {
-                navbarMenu.classList.remove('active');
-            });
-        });
-
-        const fileInput = document.querySelector(".file-upload-input");
-        const fileNameZone = document.querySelector(".file-upload__name");
-        const scheduleToggle = document.getElementById("schedule_toggle");
-        const scheduleFields = document.getElementById("schedule_fields");
-        const scheduleDateInput = document.getElementById("schedule_date");
-        const scheduleTimeInput = document.getElementById("schedule_time");
-
-        // 設定日期和時間的最小值（當前時間）
-        function setMinDateTime() {
-            const now = new Date();
-
-            // 設定日期最小值為今天
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const todayStr = `${year}-${month}-${day}`;
-            scheduleDateInput.min = todayStr;
-
-            // 如果選擇的是今天，時間最小值為當前時間
-            scheduleDateInput.addEventListener('change', function () {
-                if (this.value === todayStr) {
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    scheduleTimeInput.min = `${hours}:${minutes}`;
-                } else {
-                    scheduleTimeInput.min = '00:00';
-                }
-            });
-        }
-
-        // 初始化日期時間限制
-        setMinDateTime();
-
-        // 確保點擊日期時間輸入框可以打開選擇器
-        scheduleDateInput.addEventListener('click', function () {
-            this.showPicker && this.showPicker();
-        });
-
-        scheduleTimeInput.addEventListener('click', function () {
-            this.showPicker && this.showPicker();
-        });
-
-        // 顯示上傳檔案名稱
-        fileInput.addEventListener("change", function (e) {
-            const fileName = e.target.files[0]?.name || '未選擇任何檔案';
-            fileNameZone.textContent = fileName;
-        });
-
-        // 拖曳檔案
-        function dropHandler(event) {
-            event.preventDefault();
-            const file = event.dataTransfer.files[0];
-            fileInput.files = event.dataTransfer.files;
-            fileNameZone.textContent = file?.name || '未選擇任何檔案';
-        }
-
-        // 排程開關切換
-        scheduleToggle.addEventListener("change", function () {
-            if (this.checked) {
-                scheduleFields.style.display = "flex";
+        scheduleDateInput.addEventListener('change', function () {
+            if (this.value === todayStr) {
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                scheduleTimeInput.min = `${hours}:${minutes}`;
             } else {
-                scheduleFields.style.display = "none";
-                // 清空排程欄位
-                scheduleDateInput.value = "";
-                scheduleTimeInput.value = "";
+                scheduleTimeInput.min = '00:00';
             }
         });
+    }
 
-        // 顯示 Loading 畫面
-        function showLoading() {
-            document.getElementById('loading').style.display = 'flex';
+    setMinDateTime();
+
+    scheduleDateInput.addEventListener('click', function () {
+        this.showPicker && this.showPicker();
+    });
+
+    scheduleTimeInput.addEventListener('click', function () {
+        this.showPicker && this.showPicker();
+    });
+
+    fileInput.addEventListener("change", function (e) {
+        const fileName = e.target.files[0]?.name || '未選擇任何檔案';
+        fileNameZone.textContent = fileName;
+    });
+
+    function dropHandler(event) {
+        event.preventDefault();
+        const file = event.dataTransfer.files[0];
+        fileInput.files = event.dataTransfer.files;
+        fileNameZone.textContent = file?.name || '未選擇任何檔案';
+    }
+
+    scheduleToggle.addEventListener("change", function () {
+        if (this.checked) {
+            scheduleFields.style.display = "flex";
+        } else {
+            scheduleFields.style.display = "none";
+            scheduleDateInput.value = "";
+            scheduleTimeInput.value = "";
+        }
+    });
+
+    function showLoading() {
+        document.getElementById('loading').style.display = 'flex';
+    }
+
+    function validateAndSubmit() {
+        const notificationType = document.getElementById("notification_type").value;
+        const fileInput = document.querySelector(".file-upload-input");
+        const hasFile = fileInput.files.length > 0;
+        const isScheduled = scheduleToggle.checked;
+
+        if (!notificationType && !hasFile) {
+            alert("請選擇推播類型和上傳檔案");
+            return false;
+        }
+        if (!notificationType) {
+            alert("請選擇推播類型");
+            return false;
+        }
+        if (!hasFile) {
+            alert("請上傳檔案");
+            return false;
         }
 
-        // 表單驗證與提交
-        function validateAndSubmit() {
-            const notificationType = document.getElementById("notification_type").value;
-            const fileInput = document.querySelector(".file-upload-input");
-            const hasFile = fileInput.files.length > 0;
-            const isScheduled = scheduleToggle.checked;
-
-            // 檢查推播類型和檔案是否都已選擇
-            if (!notificationType && !hasFile) {
-                alert("請選擇推播類型和上傳檔案");
+        if (isScheduled) {
+            const scheduleDate = scheduleDateInput.value;
+            const scheduleTime = scheduleTimeInput.value;
+            if (!scheduleDate || !scheduleTime) {
+                alert("請填寫完整的排程日期和時間");
                 return false;
             }
-
-            if (!notificationType) {
-                alert("請選擇推播類型");
+            const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
+            const now = new Date();
+            if (scheduledDateTime <= now) {
+                alert("排程時間必須是未來的時間");
                 return false;
             }
-
-            if (!hasFile) {
-                alert("請上傳檔案");
-                return false;
-            }
-
-            // 如果啟用排程，檢查日期和時間是否已填寫
-            if (isScheduled) {
-                const scheduleDate = scheduleDateInput.value;
-                const scheduleTime = scheduleTimeInput.value;
-
-                if (!scheduleDate || !scheduleTime) {
-                    alert("請填寫完整的排程日期和時間");
-                    return false;
-                }
-
-                // 檢查排程時間是否在未來
-                const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
-                const now = new Date();
-
-                if (scheduledDateTime <= now) {
-                    alert("排程時間必須是未來的時間");
-                    return false;
-                }
-            }
-
-            // 驗證通過，顯示 loading
-            showLoading();
-            return true;
         }
 
-    </script>
-
-
-</body>
-
-</html>
+        showLoading();
+        return true;
+    }
+</script>
+{% endblock %}
