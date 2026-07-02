@@ -4,7 +4,7 @@ config.json
 # uv
 .venv/
 .python-version
-
+.DS_Store
 # Python
 venv/
 __pycache__/
@@ -19,3 +19,4 @@ build/
 #data
 /data/history.json
 /data/scheduled_notifications.json
+CLAUDE.md

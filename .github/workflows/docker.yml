@@ -3,8 +3,8 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main #正式機
-      - dev #測試機
+      - main
+      - dev
   workflow_dispatch: # 允許手動觸發
 
 env:
@@ -44,6 +44,7 @@ jobs:
             type=ref,event=pr
 
       - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
